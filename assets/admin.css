@@ -1,0 +1,188 @@
+/* LLM Bot Monitor — Admin Dashboard Styles */
+
+/* Stats Cards */
+.llm-stats-cards {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 16px;
+	margin: 20px 0;
+}
+
+.llm-stat-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-top: 3px solid #1d2327;
+	border-radius: 4px;
+	padding: 20px;
+	text-align: center;
+}
+
+.llm-stat-label {
+	display: block;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #1d2327;
+	margin-bottom: 8px;
+}
+
+.llm-stat-card strong {
+	display: block;
+	font-size: 36px;
+	line-height: 1.2;
+	color: #1d2327;
+}
+
+.llm-stat-desc {
+	display: block;
+	font-size: 12px;
+	color: #646970;
+	margin-top: 4px;
+}
+
+/* Dashboard Row (Chart + Top Bots) */
+.llm-dashboard-row {
+	display: grid;
+	grid-template-columns: 2fr 1fr;
+	gap: 16px;
+	margin-bottom: 20px;
+}
+
+.llm-panel {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-top: 3px solid #1d2327;
+	border-radius: 4px;
+	padding: 20px;
+}
+
+.llm-panel h2 {
+	font-size: 14px;
+	font-weight: 600;
+	margin: 0 0 16px;
+	padding: 0;
+}
+
+.llm-no-data {
+	color: #646970;
+	font-style: italic;
+}
+
+/* Chart */
+#llm-chart {
+	width: 100%;
+	height: auto;
+	max-height: 300px;
+}
+
+/* Top Bots */
+.llm-top-bots-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: bot-rank;
+}
+
+.llm-top-bots-list li {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 0;
+	border-bottom: 1px solid #f0f0f1;
+	counter-increment: bot-rank;
+}
+
+.llm-top-bots-list li:last-child {
+	border-bottom: none;
+}
+
+.llm-bot-name::before {
+	content: counter(bot-rank) ". ";
+	color: #646970;
+	font-weight: 400;
+}
+
+.llm-bot-name {
+	font-weight: 500;
+}
+
+.llm-bot-count {
+	background: #f0f0f1;
+	border-radius: 10px;
+	padding: 2px 10px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+/* Filter Bar */
+.llm-filter-bar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: flex-end;
+	margin-bottom: 16px;
+	padding: 16px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.llm-filter-bar label {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+	font-weight: 500;
+	color: #646970;
+}
+
+.llm-filter-bar input[type="text"],
+.llm-filter-bar input[type="date"],
+.llm-filter-bar input[type="number"],
+.llm-filter-bar select {
+	min-width: 120px;
+}
+
+/* Table tweaks */
+.wp-list-table .column-cb {
+	width: 2.2em;
+}
+
+.wp-list-table td[title] {
+	max-width: 300px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Pagination */
+.tablenav .tablenav-pages {
+	float: right;
+}
+
+.tablenav .tablenav-pages .paging-input {
+	font-size: 13px;
+}
+
+/* Responsive */
+@media screen and (max-width: 1024px) {
+	.llm-stats-cards {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.llm-dashboard-row {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media screen and (max-width: 600px) {
+	.llm-stats-cards {
+		grid-template-columns: 1fr;
+	}
+
+	.llm-filter-bar {
+		flex-direction: column;
+	}
+}

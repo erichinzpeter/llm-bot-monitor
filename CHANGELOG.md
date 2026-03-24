@@ -3,6 +3,45 @@
 Development changelog tracking code review findings and fixes.
 Serves as a learning reference for future iterations.
 
+## v2.0.0 — 2026-03-24
+
+Major feature release: four-tab admin dashboard, bot categorization, AI visibility scoring, cache configuration guide, and design refresh.
+
+### New Features
+
+- **Tab navigation** — Admin page split into four tabs: Crawler Logs, Bot-Übersicht, AI-Sichtbarkeit, Konfiguration
+- **Bot-Übersicht tab** — All 47 tracked bots grouped by provider (OpenAI, Anthropic, Google, …) with Grounding/Training category badges and hit stats per time period
+- **AI-Sichtbarkeit tab** — All published pages scored by AI coverage (% of active bots that visited in the selected period), with summary cards and color-coded score badges
+- **Konfiguration tab** — Cache exclusion instructions for WP Rocket, LiteSpeed Cache, W3 Total Cache, WP Super Cache, and Cloudflare; copyable bot patterns in plain, regex, and wildcard formats
+- **Bot metadata** — `llm_bot_monitor_bot_list()` now returns `[name, provider, category]` per bot instead of a flat string
+- **Text logo** — Header now shows "LLM Bot Monitor by Eric Hinzpeter" with link to eric-hinzpeter.de
+- **Tab intro text** — Each tab has a one-sentence description explaining its purpose and, where relevant, how metrics are calculated
+
+### Design
+
+- Minimalist WordPress-native aesthetic — no dark top borders, more whitespace, subtle box shadows
+- New CSS components: `.llm-category-badge`, `.llm-score-badge` (high/medium/low), `.llm-provider-group`, `.llm-copyable`, `.llm-tab-intro`
+
+### Bug Fixes & Improvements
+
+- **UTC datetime handling** — `strtotime()` on stored datetimes now appends `' UTC'` to prevent timezone misinterpretation on non-UTC servers
+- **Chart query timezone** — `DATE(hit_at)` replaced with `DATE(CONVERT_TZ(hit_at, '+00:00', @@session.time_zone))` so bar chart day-bucketing is correct on non-UTC MySQL servers
+- **`filemtime()` guard** — Asset versioning now checks `file_exists()` before calling `filemtime()` to prevent E_WARNING on missing files
+- **Table name constant** — All query functions consistently use `LLM_BOT_MONITOR_TABLE` constant; hardcoded string in visibility query removed
+- **`no_found_rows`** — Added to `get_posts()` call in visibility tab to suppress unnecessary COUNT query
+- **`Claude-Web` reclassified** — Changed category from `training` to `grounding` (it's a retrieval/browsing bot)
+
+### Code Review Findings (3 rounds)
+
+- Unescaped `$row_class` variable in bot table `<tr>` — replaced with direct ternary inline
+- `.llm-bot-inactive` CSS selector mismatch — corrected from `.llm-bot-row.llm-bot-inactive` to `tr.llm-bot-inactive`
+- Stat card HTML/CSS mismatch — aligned `<h3>` / `.llm-stat-number` classes between PHP and CSS
+- Orphan CSS rules removed (`.llm-config-section`, `.llm-period-filter`)
+
+**Lesson:** When CSS is written before PHP, always cross-reference every class name. UTC datetimes need explicit hints at both the PHP (`strtotime` + `' UTC'`) and SQL (`CONVERT_TZ`) layer.
+
+---
+
 ## v1.0.0 — 2026-03-23
 
 Initial release after 4 rounds of code review.

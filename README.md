@@ -4,13 +4,12 @@ WordPress plugin that tracks AI/LLM bot crawlers visiting your site. Install, ac
 
 ## Features
 
-- **Automatic detection** of 50 AI bots: GPTBot, ClaudeBot, PerplexityBot, Google-Extended, Amazonbot, Bytespider, and more
-- **Admin dashboard** at Tools > LLM Bot Monitor with:
-  - Stats cards (all time, 7-day, 30-day, 90-day)
-  - 30-day bar chart
-  - Top bots leaderboard
-  - Filterable, paginated log table
-  - Bulk delete
+- **Automatic detection** of 47 AI bots categorized as Grounding (real-time search) or Training (data collection)
+- **Four-tab admin dashboard** at Tools > LLM Bot Monitor:
+  - **Crawler Logs** — stats cards, 30-day bar chart, top bots leaderboard, filterable paginated log table, bulk delete
+  - **Bot-Übersicht** — all tracked bots grouped by provider with Grounding/Training badges and hit stats
+  - **AI-Sichtbarkeit** — all published pages scored by AI coverage (% of active bots that visited)
+  - **Konfiguration** — cache exclusion instructions for 5 caching plugins, copyable bot patterns
 - **Lightweight** — adds <0.01s overhead per request
 - **90-day automatic log rotation** via WP-Cron
 - **Zero dependencies** — no external libraries, no build step
@@ -44,7 +43,13 @@ After activation, the plugin immediately starts tracking AI bot visits in the ba
 
 ### Tracked Bots
 
-OpenAI (GPTBot, ChatGPT-User, OAI-SearchBot), Anthropic (ClaudeBot, Claude-Web, Claude-SearchBot), Google (Google-Extended, GoogleOther, Gemini-Deep-Research, Google-CloudVertexBot), Perplexity (PerplexityBot), Meta (FacebookBot, Meta-ExternalAgent), Amazon (Amazonbot, NovaAct), ByteDance (Bytespider), Apple (Applebot-Extended), Common Crawl (CCBot), and 20+ more.
+47 bots across two categories:
+
+**Grounding** (real-time search/retrieval): ChatGPT-User, OAI-SearchBot, Claude-Web, Claude-SearchBot, PerplexityBot, Perplexity-User, Google-Extended, Gemini-Deep-Research, GoogleAgent-Mariner, Meta-ExternalAgent, NovaAct, YouBot, Cohere-ai
+
+**Training** (data collection for future models): GPTBot, ClaudeBot, anthropic-ai, GoogleOther, Google-CloudVertexBot, Google-Safety, FacebookBot, Meta-ExternalFetcher, Amazonbot, Bytespider, Applebot-Extended, CCBot, Diffbot, AI2Bot, MistralBot, cohere-training, and more.
+
+Providers: OpenAI, Anthropic, Google, Perplexity, Meta, Amazon, ByteDance, Apple, Cohere, Mistral, Common Crawl, Diffbot, You.com, AI2, and others.
 
 ## Privacy & GDPR
 

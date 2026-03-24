@@ -3,7 +3,7 @@
  * Plugin Name: LLM Bot Monitor
  * Plugin URI:  https://github.com/erichinzpeter/llm-bot-monitor
  * Description: Tracks AI/LLM bot crawlers visiting your site. GDPR-compliant — only bot traffic is logged, never human visitors.
- * Version:     1.0.0
+ * Version:     2.0.0
  * Author:      Eric Hinzpeter
  * Author URI:  https://eric-hinzpeter.de
  * License:     GPL-2.0-or-later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LLM_BOT_MONITOR_VERSION', '1.0.0' );
+define( 'LLM_BOT_MONITOR_VERSION', '2.0.0' );
 define( 'LLM_BOT_MONITOR_TABLE', 'llm_bot_log' );
 
 /* ==========================================================================
@@ -58,6 +58,9 @@ function llm_bot_monitor_deactivate(): void {
 }
 register_deactivation_hook( __FILE__, 'llm_bot_monitor_deactivate' );
 
+// Runs on every admin page load; calls activate() when the stored DB version
+// doesn't match the plugin version. Safe for updates: dbDelta() only adds
+// missing columns/indexes and never drops or truncates data.
 function llm_bot_monitor_check_db(): void {
 	if ( get_option( 'llm_bot_monitor_db_version' ) !== LLM_BOT_MONITOR_VERSION ) {
 		llm_bot_monitor_activate();
@@ -72,78 +75,86 @@ add_action( 'admin_init', 'llm_bot_monitor_check_db' );
 function llm_bot_monitor_bot_list(): array {
 	return array(
 		// OpenAI
-		'GPTBot'                 => 'GPTBot',
-		'ChatGPT-User'          => 'ChatGPT-User',
-		'OAI-SearchBot'         => 'OAI-SearchBot',
+		'GPTBot'                 => array( 'name' => 'GPTBot',                 'provider' => 'OpenAI',       'category' => 'training' ),
+		'ChatGPT-User'          => array( 'name' => 'ChatGPT-User',          'provider' => 'OpenAI',       'category' => 'grounding' ),
+		'OAI-SearchBot'         => array( 'name' => 'OAI-SearchBot',         'provider' => 'OpenAI',       'category' => 'grounding' ),
 
 		// Anthropic
-		'ClaudeBot'             => 'ClaudeBot',
-		'Claude-Web'            => 'Claude-Web',
-		'Claude-SearchBot'      => 'Claude-SearchBot',
-		'anthropic-ai'          => 'Anthropic AI',
+		'ClaudeBot'             => array( 'name' => 'ClaudeBot',             'provider' => 'Anthropic',    'category' => 'training' ),
+		'Claude-Web'            => array( 'name' => 'Claude-Web',            'provider' => 'Anthropic',    'category' => 'grounding' ),
+		'Claude-SearchBot'      => array( 'name' => 'Claude-SearchBot',      'provider' => 'Anthropic',    'category' => 'grounding' ),
+		'anthropic-ai'          => array( 'name' => 'Anthropic AI',          'provider' => 'Anthropic',    'category' => 'training' ),
 
 		// Google AI
-		'Google-Extended'       => 'Google-Extended',
-		'GoogleOther'           => 'GoogleOther',
-		'GoogleOther-Image'     => 'GoogleOther-Image',
-		'GoogleOther-Video'     => 'GoogleOther-Video',
-		'Google-CloudVertexBot' => 'Google-CloudVertexBot',
-		'Gemini-Deep-Research'  => 'Gemini-Deep-Research',
-		'Google-Safety'         => 'Google-Safety',
-		'GoogleAgent-Mariner'   => 'GoogleAgent-Mariner',
+		'Google-Extended'       => array( 'name' => 'Google-Extended',       'provider' => 'Google',       'category' => 'training' ),
+		'GoogleOther'           => array( 'name' => 'GoogleOther',           'provider' => 'Google',       'category' => 'training' ),
+		'GoogleOther-Image'     => array( 'name' => 'GoogleOther-Image',     'provider' => 'Google',       'category' => 'training' ),
+		'GoogleOther-Video'     => array( 'name' => 'GoogleOther-Video',     'provider' => 'Google',       'category' => 'training' ),
+		'Google-CloudVertexBot' => array( 'name' => 'Google-CloudVertexBot', 'provider' => 'Google',       'category' => 'training' ),
+		'Gemini-Deep-Research'  => array( 'name' => 'Gemini-Deep-Research',  'provider' => 'Google',       'category' => 'grounding' ),
+		'Google-Safety'         => array( 'name' => 'Google-Safety',         'provider' => 'Google',       'category' => 'training' ),
+		'GoogleAgent-Mariner'   => array( 'name' => 'GoogleAgent-Mariner',   'provider' => 'Google',       'category' => 'grounding' ),
 
 		// Perplexity
-		'PerplexityBot'         => 'PerplexityBot',
-		'Perplexity-User'       => 'Perplexity-User',
+		'PerplexityBot'         => array( 'name' => 'PerplexityBot',         'provider' => 'Perplexity',   'category' => 'grounding' ),
+		'Perplexity-User'       => array( 'name' => 'Perplexity-User',       'provider' => 'Perplexity',   'category' => 'grounding' ),
 
 		// Meta
-		'FacebookBot'           => 'FacebookBot',
-		'Meta-ExternalAgent'    => 'Meta-ExternalAgent',
-		'Meta-ExternalFetcher'  => 'Meta-ExternalFetcher',
+		'FacebookBot'           => array( 'name' => 'FacebookBot',           'provider' => 'Meta',         'category' => 'training' ),
+		'Meta-ExternalAgent'    => array( 'name' => 'Meta-ExternalAgent',    'provider' => 'Meta',         'category' => 'grounding' ),
+		'Meta-ExternalFetcher'  => array( 'name' => 'Meta-ExternalFetcher',  'provider' => 'Meta',         'category' => 'training' ),
 
 		// Amazon
-		'Amazonbot'             => 'Amazonbot',
-		'NovaAct'               => 'NovaAct',
+		'Amazonbot'             => array( 'name' => 'Amazonbot',             'provider' => 'Amazon',       'category' => 'training' ),
+		'NovaAct'               => array( 'name' => 'NovaAct',               'provider' => 'Amazon',       'category' => 'grounding' ),
 
 		// ByteDance
-		'Bytespider'            => 'Bytespider',
+		'Bytespider'            => array( 'name' => 'Bytespider',            'provider' => 'ByteDance',    'category' => 'training' ),
 
-		// Apple (AI-specific extended crawler)
-		'Applebot-Extended'     => 'Applebot-Extended',
+		// Apple
+		'Applebot-Extended'     => array( 'name' => 'Applebot-Extended',     'provider' => 'Apple',        'category' => 'training' ),
 
-		// Common Crawl / ML training
-		'CCBot'                 => 'CCBot',
-		'Diffbot'               => 'Diffbot',
+		// Common Crawl
+		'CCBot'                 => array( 'name' => 'CCBot',                 'provider' => 'Common Crawl', 'category' => 'training' ),
+
+		// Diffbot
+		'Diffbot'               => array( 'name' => 'Diffbot',               'provider' => 'Diffbot',      'category' => 'training' ),
 
 		// SEO / Data
-		'SemrushBot'            => 'SemrushBot',
-		'AhrefsBot'             => 'AhrefsBot',
-		'DotBot'                => 'DotBot',
-		'MJ12bot'               => 'MJ12bot',
-		'DataForSeoBot'         => 'DataForSeoBot',
+		'SemrushBot'            => array( 'name' => 'SemrushBot',            'provider' => 'SEO / Data',   'category' => 'training' ),
+		'AhrefsBot'             => array( 'name' => 'AhrefsBot',             'provider' => 'SEO / Data',   'category' => 'training' ),
+		'DotBot'                => array( 'name' => 'DotBot',                'provider' => 'SEO / Data',   'category' => 'training' ),
+		'MJ12bot'               => array( 'name' => 'MJ12bot',               'provider' => 'SEO / Data',   'category' => 'training' ),
+		'DataForSeoBot'         => array( 'name' => 'DataForSeoBot',         'provider' => 'SEO / Data',   'category' => 'training' ),
 
-		// AI Search / Assistants
-		'YouBot'                => 'YouBot',
-		'AI2Bot'                => 'AI2Bot',
-		'Cohere-ai'             => 'Cohere AI',
-		'cohere-training'       => 'Cohere Training',
-		'MistralBot'            => 'MistralBot',
-		'Timpibot'              => 'Timpibot',
-		'PetalBot'              => 'PetalBot',
-		'iaskspider'            => 'iAsk Spider',
-		'Kangaroo Bot'          => 'Kangaroo Bot',
-		'Velenpublicwebcrawler' => 'Velen Crawler',
-		'Webzio-Extended'       => 'Webzio-Extended',
-		'omgili'                => 'Omgili',
-		'Nicecrawler'           => 'Nicecrawler',
-		'FriendlyCrawler'       => 'FriendlyCrawler',
-		'ImagesiftBot'          => 'ImagesiftBot',
-		'img2dataset'           => 'img2dataset',
+		// You.com
+		'YouBot'                => array( 'name' => 'YouBot',                'provider' => 'You.com',      'category' => 'grounding' ),
 
-		// Devin / AI Agents
-		'Devin'                 => 'Devin',
-		'LinerBot'              => 'LinerBot',
-		'QualifiedBot'          => 'QualifiedBot',
+		// AI2
+		'AI2Bot'                => array( 'name' => 'AI2Bot',                'provider' => 'AI2',          'category' => 'training' ),
+
+		// Cohere
+		'Cohere-ai'             => array( 'name' => 'Cohere AI',             'provider' => 'Cohere',       'category' => 'grounding' ),
+		'cohere-training'       => array( 'name' => 'Cohere Training',       'provider' => 'Cohere',       'category' => 'training' ),
+
+		// Mistral
+		'MistralBot'            => array( 'name' => 'MistralBot',            'provider' => 'Mistral',      'category' => 'training' ),
+
+		// Other
+		'Timpibot'              => array( 'name' => 'Timpibot',              'provider' => 'Other',        'category' => 'training' ),
+		'PetalBot'              => array( 'name' => 'PetalBot',              'provider' => 'Other',        'category' => 'training' ),
+		'iaskspider'            => array( 'name' => 'iAsk Spider',           'provider' => 'Other',        'category' => 'training' ),
+		'Kangaroo Bot'          => array( 'name' => 'Kangaroo Bot',          'provider' => 'Other',        'category' => 'training' ),
+		'Velenpublicwebcrawler' => array( 'name' => 'Velen Crawler',         'provider' => 'Other',        'category' => 'training' ),
+		'Webzio-Extended'       => array( 'name' => 'Webzio-Extended',       'provider' => 'Other',        'category' => 'training' ),
+		'omgili'                => array( 'name' => 'Omgili',                'provider' => 'Other',        'category' => 'training' ),
+		'Nicecrawler'           => array( 'name' => 'Nicecrawler',           'provider' => 'Other',        'category' => 'training' ),
+		'FriendlyCrawler'       => array( 'name' => 'FriendlyCrawler',       'provider' => 'Other',        'category' => 'training' ),
+		'ImagesiftBot'          => array( 'name' => 'ImagesiftBot',          'provider' => 'Other',        'category' => 'training' ),
+		'img2dataset'           => array( 'name' => 'img2dataset',           'provider' => 'Other',        'category' => 'training' ),
+		'Devin'                 => array( 'name' => 'Devin',                 'provider' => 'Other',        'category' => 'training' ),
+		'LinerBot'              => array( 'name' => 'LinerBot',              'provider' => 'Other',        'category' => 'training' ),
+		'QualifiedBot'          => array( 'name' => 'QualifiedBot',          'provider' => 'Other',        'category' => 'training' ),
 	);
 }
 
@@ -153,9 +164,12 @@ function llm_bot_monitor_match_bot( string $ua ): string|false {
 
 	if ( $pattern === null ) {
 		$bots      = llm_bot_monitor_bot_list();
-		$lower_map = array_change_key_case( $bots, CASE_LOWER );
-		$escaped   = array_map( static fn( $sig ) => preg_quote( $sig, '/' ), array_keys( $bots ) );
-		$pattern   = '/(' . implode( '|', $escaped ) . ')/i';
+		$lower_map = array();
+		foreach ( $bots as $key => $meta ) {
+			$lower_map[ strtolower( $key ) ] = $meta['name'];
+		}
+		$escaped = array_map( static fn( $sig ) => preg_quote( $sig, '/' ), array_keys( $bots ) );
+		$pattern = '/(' . implode( '|', $escaped ) . ')/i';
 	}
 
 	if ( preg_match( $pattern, $ua, $m ) ) {
@@ -242,14 +256,14 @@ function llm_bot_monitor_enqueue_assets( string $hook ): void {
 		'llm-bot-monitor-admin',
 		$url . 'assets/admin.css',
 		array(),
-		(string) filemtime( $dir . 'assets/admin.css' )
+		file_exists( $dir . 'assets/admin.css' ) ? (string) filemtime( $dir . 'assets/admin.css' ) : LLM_BOT_MONITOR_VERSION
 	);
 
 	wp_enqueue_script(
 		'llm-bot-monitor-admin',
 		$url . 'assets/admin.js',
 		array(),
-		(string) filemtime( $dir . 'assets/admin.js' ),
+		file_exists( $dir . 'assets/admin.js' ) ? (string) filemtime( $dir . 'assets/admin.js' ) : LLM_BOT_MONITOR_VERSION,
 		true
 	);
 }
@@ -286,10 +300,10 @@ function llm_bot_monitor_get_chart_data(): array {
 	$table = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
 
 	$rows = $wpdb->get_results( $wpdb->prepare(
-		"SELECT DATE(hit_at) AS day, COUNT(*) AS hits
+		"SELECT DATE(CONVERT_TZ(hit_at, '+00:00', @@session.time_zone)) AS day, COUNT(*) AS hits
 		 FROM {$table}
 		 WHERE hit_at >= %s
-		 GROUP BY DATE(hit_at)
+		 GROUP BY DATE(CONVERT_TZ(hit_at, '+00:00', @@session.time_zone))
 		 ORDER BY day ASC",
 		gmdate( 'Y-m-d', strtotime( '-30 days' ) )
 	) );
@@ -325,6 +339,30 @@ function llm_bot_monitor_get_top_bots( int $limit = 10 ): array {
 		gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) ),
 		$limit
 	) );
+}
+
+function llm_bot_monitor_get_bot_overview( int $days = 30 ): array {
+	global $wpdb;
+	$table = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
+
+	$rows = $wpdb->get_results( $wpdb->prepare(
+		"SELECT bot_name, COUNT(*) AS hits, MAX(hit_at) AS last_seen
+		 FROM {$table}
+		 WHERE hit_at >= %s
+		 GROUP BY bot_name
+		 ORDER BY hits DESC",
+		gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) )
+	) );
+
+	$result = array();
+	foreach ( $rows as $row ) {
+		$result[ $row->bot_name ] = array(
+			'hits'      => (int) $row->hits,
+			'last_seen' => $row->last_seen,
+		);
+	}
+
+	return $result;
 }
 
 function llm_bot_monitor_get_distinct_bots(): array {
@@ -384,6 +422,84 @@ function llm_bot_monitor_get_logs( array $filters, int $page, int $per_page ): a
 	return array( 'rows' => $rows, 'total' => $total );
 }
 
+/* ---------- Visibility data ------------------------------------------- */
+
+function llm_bot_monitor_get_visibility_data( int $days = 30 ): array {
+	global $wpdb;
+	$table = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
+	$since = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+
+	// 1. Get all published pages and posts
+	$posts = get_posts( [
+		'post_type'      => [ 'post', 'page' ],
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'no_found_rows'  => true,
+		'orderby'        => 'date',
+		'order'          => 'DESC',
+	] );
+
+	// 2. Get bot visits aggregated by URL path
+	$bot_visits = $wpdb->get_results( $wpdb->prepare(
+		"SELECT request_url, COUNT(*) AS total_hits, COUNT(DISTINCT bot_name) AS unique_bots
+		 FROM {$table}
+		 WHERE hit_at >= %s
+		 GROUP BY request_url",
+		$since
+	) );
+
+	// 3. Get total distinct bots active in this period
+	$total_active_bots = (int) $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(DISTINCT bot_name) FROM {$table} WHERE hit_at >= %s",
+		$since
+	) );
+	if ( $total_active_bots < 1 ) {
+		$total_active_bots = 1; // avoid division by zero
+	}
+
+	// 4. Build URL path lookup from bot visits
+	$path_hits = [];
+	foreach ( $bot_visits as $row ) {
+		$path = wp_parse_url( $row->request_url, PHP_URL_PATH );
+		if ( $path ) {
+			$path = untrailingslashit( $path );
+			if ( ! isset( $path_hits[ $path ] ) ) {
+				$path_hits[ $path ] = [ 'total_hits' => 0, 'unique_bots' => 0 ];
+			}
+			$path_hits[ $path ]['total_hits'] += (int) $row->total_hits;
+			$path_hits[ $path ]['unique_bots'] = max( $path_hits[ $path ]['unique_bots'], (int) $row->unique_bots );
+		}
+	}
+
+	// 5. Match posts to bot visit data
+	$results = [];
+	foreach ( $posts as $post ) {
+		$permalink = get_permalink( $post->ID );
+		$path      = untrailingslashit( wp_make_link_relative( $permalink ) );
+		$hits_data = $path_hits[ $path ] ?? [ 'total_hits' => 0, 'unique_bots' => 0 ];
+		$ai_score  = round( $hits_data['unique_bots'] / $total_active_bots * 100 );
+
+		$results[] = [
+			'id'          => $post->ID,
+			'title'       => $post->post_title,
+			'type'        => $post->post_type,
+			'permalink'   => $permalink,
+			'published'   => $post->post_date,
+			'total_hits'  => $hits_data['total_hits'],
+			'unique_bots' => $hits_data['unique_bots'],
+			'ai_score'    => $ai_score,
+		];
+	}
+
+	// Sort by AI score descending
+	usort( $results, fn( $a, $b ) => $b['ai_score'] <=> $a['ai_score'] );
+
+	return [
+		'pages'             => $results,
+		'total_active_bots' => $total_active_bots,
+	];
+}
+
 /* ==========================================================================
    6. BULK DELETE HANDLER
    ========================================================================== */
@@ -419,7 +535,7 @@ function llm_bot_monitor_handle_bulk_action(): void {
 }
 
 /* ==========================================================================
-   7. DASHBOARD RENDER
+   7. DASHBOARD RENDER — ROUTER & HEADER
    ========================================================================== */
 
 function llm_bot_monitor_render_page(): void {
@@ -427,8 +543,62 @@ function llm_bot_monitor_render_page(): void {
 		wp_die( 'Unauthorized' );
 	}
 
+	// Handle bulk delete action before any output (needs headers).
 	llm_bot_monitor_handle_bulk_action();
 
+	$tab  = sanitize_key( $_GET['tab'] ?? 'logs' );
+	$tabs = array(
+		'logs'       => 'Crawler Logs',
+		'bots'       => 'Bot-Übersicht',
+		'visibility' => 'AI-Sichtbarkeit',
+		'config'     => 'Konfiguration',
+	);
+
+	echo '<div class="wrap">';
+
+	llm_bot_monitor_render_header( $tab, $tabs );
+
+	switch ( $tab ) {
+		case 'bots':
+			llm_bot_monitor_render_tab_bots();
+			break;
+		case 'visibility':
+			llm_bot_monitor_render_tab_visibility();
+			break;
+		case 'config':
+			llm_bot_monitor_render_tab_config();
+			break;
+		default:
+			llm_bot_monitor_render_tab_logs();
+			break;
+	}
+
+	echo '</div>';
+}
+
+function llm_bot_monitor_render_header( string $active_tab, array $tabs ): void {
+	?>
+	<div class="llm-header">
+		<h1>LLM Bot Monitor</h1>
+		<p class="llm-header-byline">by <a href="https://eric-hinzpeter.de" target="_blank" rel="noopener">Eric Hinzpeter</a></p>
+	</div>
+	<?php
+
+	echo '<nav class="nav-tab-wrapper">';
+	$base_url = admin_url( 'tools.php?page=llm-bot-monitor' );
+	foreach ( $tabs as $slug => $label ) {
+		$url   = $slug === 'logs' ? $base_url : add_query_arg( 'tab', $slug, $base_url );
+		$class = $slug === $active_tab ? 'nav-tab nav-tab-active' : 'nav-tab';
+		printf( '<a href="%s" class="%s">%s</a>', esc_url( $url ), esc_attr( $class ), esc_html( $label ) );
+	}
+	echo '</nav>';
+}
+
+/* ==========================================================================
+   7a. TAB: CRAWLER LOGS
+   ========================================================================== */
+
+function llm_bot_monitor_render_tab_logs(): void {
 	$stats      = llm_bot_monitor_get_stats();
 	$chart_data = llm_bot_monitor_get_chart_data();
 	$top_bots   = llm_bot_monitor_get_top_bots();
@@ -455,29 +625,30 @@ function llm_bot_monitor_render_page(): void {
 		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( sprintf( '%d log entries deleted.', $count ) ) . '</p></div>';
 	}
 	?>
-	<div class="wrap">
-		<h1>LLM Bot Monitor</h1>
+	<div class="llm-tab-content">
+
+		<p class="llm-tab-intro">Alle AI- und LLM-Bot-Besuche deiner Website in Echtzeit. Zeigt welche Crawler aktiv sind, welche Seiten sie besuchen und wann sie zuletzt da waren.</p>
 
 		<!-- Stats Cards -->
 		<div class="llm-stats-cards">
 			<div class="llm-stat-card">
-				<span class="llm-stat-label">ALL TIME</span>
-				<strong><?php echo esc_html( number_format_i18n( $stats['all_time'] ) ); ?></strong>
+				<h3>ALL TIME</h3>
+				<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $stats['all_time'] ) ); ?></span>
 				<span class="llm-stat-desc">total hits</span>
 			</div>
 			<div class="llm-stat-card">
-				<span class="llm-stat-label">THIS WEEK</span>
-				<strong><?php echo esc_html( number_format_i18n( $stats['this_week'] ) ); ?></strong>
+				<h3>THIS WEEK</h3>
+				<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $stats['this_week'] ) ); ?></span>
 				<span class="llm-stat-desc">last 7 days</span>
 			</div>
 			<div class="llm-stat-card">
-				<span class="llm-stat-label">THIS MONTH</span>
-				<strong><?php echo esc_html( number_format_i18n( $stats['this_month'] ) ); ?></strong>
+				<h3>THIS MONTH</h3>
+				<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $stats['this_month'] ) ); ?></span>
 				<span class="llm-stat-desc">last 30 days</span>
 			</div>
 			<div class="llm-stat-card">
-				<span class="llm-stat-label">THIS QUARTER</span>
-				<strong><?php echo esc_html( number_format_i18n( $stats['this_quarter'] ) ); ?></strong>
+				<h3>THIS QUARTER</h3>
+				<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $stats['this_quarter'] ) ); ?></span>
 				<span class="llm-stat-desc">last 90 days</span>
 			</div>
 		</div>
@@ -611,7 +782,7 @@ function llm_bot_monitor_render_page(): void {
 								<th class="check-column">
 									<input type="checkbox" name="log_ids[]" value="<?php echo absint( $row->id ); ?>">
 								</th>
-								<td><?php echo esc_html( wp_date( 'Y-m-d H:i:s', strtotime( $row->hit_at ) ) ); ?></td>
+								<td><?php echo esc_html( wp_date( 'Y-m-d H:i:s', strtotime( $row->hit_at . ' UTC' ) ) ); ?></td>
 								<td><?php echo esc_html( $row->bot_name ); ?></td>
 								<td title="<?php echo esc_attr( $row->request_url ); ?>">
 									<?php
@@ -629,4 +800,257 @@ function llm_bot_monitor_render_page(): void {
 		</form>
 	</div>
 	<?php
+}
+
+/* ==========================================================================
+   7b. TAB: BOT-ÜBERSICHT
+   ========================================================================== */
+
+function llm_bot_monitor_render_tab_bots(): void {
+	$allowed_periods = array( 7, 30, 90 );
+	$period          = absint( $_GET['period'] ?? 30 );
+	if ( ! in_array( $period, $allowed_periods, true ) ) {
+		$period = 30;
+	}
+
+	$bot_list = llm_bot_monitor_bot_list();
+	$overview = llm_bot_monitor_get_bot_overview( $period );
+
+	// Group bots by provider.
+	$providers = array();
+	foreach ( $bot_list as $key => $meta ) {
+		$providers[ $meta['provider'] ][ $key ] = $meta;
+	}
+
+	// Desired provider display order.
+	$provider_order = array(
+		'OpenAI', 'Anthropic', 'Google', 'Perplexity', 'Meta', 'Amazon',
+		'ByteDance', 'Apple', 'Cohere', 'Mistral', 'Common Crawl', 'Diffbot',
+		'You.com', 'AI2', 'SEO / Data', 'Other',
+	);
+
+	?>
+	<div class="llm-tab-content">
+
+		<p class="llm-tab-intro">Alle 47 getrackten Bots gruppiert nach Anbieter. Grounding-Bots suchen in Echtzeit (z.&nbsp;B. ChatGPT-User), Training-Bots sammeln Daten für zukünftige Modelle (z.&nbsp;B. GPTBot).</p>
+
+		<!-- Period filter -->
+		<form method="get" class="llm-filter-bar">
+			<input type="hidden" name="page" value="llm-bot-monitor">
+			<input type="hidden" name="tab" value="bots">
+			<label>
+				Zeitraum
+				<select name="period">
+					<?php foreach ( $allowed_periods as $p ) : ?>
+						<option value="<?php echo esc_attr( $p ); ?>" <?php selected( $period, $p ); ?>>
+							<?php echo esc_html( $p . ' Tage' ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</label>
+			<button type="submit" class="button button-primary">Anzeigen</button>
+		</form>
+
+		<?php foreach ( $provider_order as $provider_name ) : ?>
+			<?php if ( empty( $providers[ $provider_name ] ) ) continue; ?>
+			<div class="llm-provider-group">
+				<h3><?php echo esc_html( $provider_name ); ?></h3>
+				<table class="wp-list-table widefat striped">
+					<thead>
+						<tr>
+							<th>Bot</th>
+							<th>Kategorie</th>
+							<th>Hits</th>
+							<th>Zuletzt gesehen</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $providers[ $provider_name ] as $key => $meta ) :
+							$bot_display = $meta['name'];
+							$stats       = $overview[ $bot_display ] ?? null;
+							$has_hits    = $stats !== null && $stats['hits'] > 0;							$badge_class = $meta['category'] === 'grounding' ? 'llm-badge-grounding' : 'llm-badge-training';
+							$badge_label = $meta['category'] === 'grounding' ? 'Grounding' : 'Training';
+						?>
+						<tr<?php echo $has_hits ? '' : ' class="llm-bot-inactive"'; ?>>
+							<td><?php echo esc_html( $bot_display ); ?></td>
+							<td><span class="llm-category-badge <?php echo esc_attr( $badge_class ); ?>"><?php echo esc_html( $badge_label ); ?></span></td>
+							<td><?php echo $has_hits ? esc_html( number_format_i18n( $stats['hits'] ) ) : '&mdash;'; ?></td>
+							<td><?php echo $has_hits ? esc_html( wp_date( 'Y-m-d H:i:s', strtotime( $stats['last_seen'] . ' UTC' ) ) ) : '&mdash;'; ?></td>
+						</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+		<?php endforeach; ?>
+
+	</div>
+	<?php
+}
+
+/* ==========================================================================
+   7c. TAB: AI-SICHTBARKEIT
+   ========================================================================== */
+
+function llm_bot_monitor_render_tab_visibility(): void {
+	$allowed_periods = array( 7, 30, 90 );
+	$period          = absint( $_GET['period'] ?? 30 );
+	if ( ! in_array( $period, $allowed_periods, true ) ) {
+		$period = 30;
+	}
+
+	$data        = llm_bot_monitor_get_visibility_data( $period );
+	$pages       = $data['pages'];
+	$total_pages = count( $pages );
+	$invisible   = count( array_filter( $pages, fn( $p ) => $p['ai_score'] === 0 ) );
+	$visible     = $total_pages - $invisible;
+	$coverage    = $total_pages > 0 ? round( $visible / $total_pages * 100 ) : 0;
+	?>
+	<div class="llm-tab-content">
+
+	<p class="llm-tab-intro">Welche deiner Seiten wurden von AI-Crawlern besucht? Der AI-Score zeigt, wie viele der aktiven Bots im gewählten Zeitraum eine Seite gefunden haben&nbsp;– 100&nbsp;% bedeutet, alle aktiven Bots waren dort.</p>
+
+	<!-- Period Filter -->
+	<form method="get" class="llm-filter-bar">
+		<input type="hidden" name="page" value="llm-bot-monitor">
+		<input type="hidden" name="tab" value="visibility">
+		<label>
+			Zeitraum
+			<select name="period">
+				<option value="7" <?php selected( $period, 7 ); ?>>7 Tage</option>
+				<option value="30" <?php selected( $period, 30 ); ?>>30 Tage</option>
+				<option value="90" <?php selected( $period, 90 ); ?>>90 Tage</option>
+			</select>
+		</label>
+		<button type="submit" class="button button-primary">Filter</button>
+	</form>
+
+	<!-- Summary Cards -->
+	<div class="llm-visibility-summary">
+		<div class="llm-stat-card">
+			<h3>UNSICHTBAR FÜR AI</h3>
+			<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $invisible ) ); ?></span>
+			<span class="llm-stat-desc">Seiten ohne Bot-Besuch</span>
+		</div>
+		<div class="llm-stat-card">
+			<h3>AI-ABDECKUNG</h3>
+			<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $coverage ) ); ?>%</span>
+			<span class="llm-stat-desc"><?php echo esc_html( number_format_i18n( $visible ) ); ?> von <?php echo esc_html( number_format_i18n( $total_pages ) ); ?> Seiten</span>
+		</div>
+		<div class="llm-stat-card">
+			<h3>VERÖFFENTLICHTE SEITEN</h3>
+			<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $total_pages ) ); ?></span>
+			<span class="llm-stat-desc">Pages &amp; Posts</span>
+		</div>
+	</div>
+
+	<!-- Visibility Table -->
+	<table class="wp-list-table widefat striped">
+		<thead>
+			<tr>
+				<th class="manage-column">Titel</th>
+				<th class="manage-column">Typ</th>
+				<th class="manage-column">AI Score</th>
+				<th class="manage-column">Veröffentlicht</th>
+			</tr>
+		</thead>
+		<tbody>
+			<?php if ( empty( $pages ) ) : ?>
+				<tr><td colspan="4">Keine veröffentlichten Inhalte gefunden.</td></tr>
+			<?php else : ?>
+				<?php foreach ( $pages as $row ) : ?>
+					<?php
+					if ( $row['ai_score'] > 60 ) {
+						$score_class = 'llm-score-high';
+					} elseif ( $row['ai_score'] >= 30 ) {
+						$score_class = 'llm-score-medium';
+					} else {
+						$score_class = 'llm-score-low';
+					}
+					$type_label = $row['type'] === 'page' ? 'Seite' : 'Beitrag';
+					?>
+					<tr>
+						<td><a href="<?php echo esc_url( $row['permalink'] ); ?>" target="_blank"><?php echo esc_html( $row['title'] ); ?></a></td>
+						<td><?php echo esc_html( $type_label ); ?></td>
+						<td><span class="llm-score-badge <?php echo esc_attr( $score_class ); ?>"><?php echo esc_html( number_format_i18n( $row['ai_score'] ) ); ?>%</span></td>
+						<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $row['published'] ) ) ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			<?php endif; ?>
+		</tbody>
+	</table>
+	</div>
+	<?php
+}
+
+/* ==========================================================================
+   7d. TAB: KONFIGURATION
+   ========================================================================== */
+
+function llm_bot_monitor_render_tab_config(): void {
+	$bots    = llm_bot_monitor_bot_list();
+	$keys    = array_map( 'strtolower', array_keys( $bots ) );
+	$plain   = implode( "\n", $keys );
+	$regex   = '(' . implode( '|', $keys ) . ')';
+	$wilds   = implode( "\n", array_map( function ( $k ) { return '.*' . $k . '.*'; }, $keys ) );
+
+	echo '<div class="llm-tab-content">';
+
+	echo '<p class="llm-tab-intro">' . esc_html( 'Damit Caching-Plugins die Bot-Erkennung nicht blockieren, müssen AI-Bots vom Cache ausgeschlossen werden. Hier findest du fertige Konfigurationsanleitungen und kopierfertige Bot-Patterns für die gängigsten Plugins.' ) . '</p>';
+
+	// Section 1: Info box
+	echo '<div class="llm-info-box">';
+	echo '<h3>' . esc_html( 'Warum Bots vom Cache ausschließen?' ) . '</h3>';
+	echo '<ul class="llm-why-list">';
+	echo '<li><strong>' . esc_html( 'Tracking-Genauigkeit' ) . '</strong> — ' . esc_html( 'Gecachte Seiten umgehen die Bot-Erkennung und verfälschen deine Statistiken' ) . '</li>';
+	echo '<li><strong>' . esc_html( 'Ressourcen sparen' ) . '</strong> — ' . esc_html( 'AI-Bots brauchen keine gecachten Inhalte, du sparst Speicher und Rechenleistung' ) . '</li>';
+	echo '<li><strong>' . esc_html( 'Echtzeit-Daten' ) . '</strong> — ' . esc_html( 'Bot-Aktivität wird sofort erfasst, nicht erst nach Cache-Ablauf' ) . '</li>';
+	echo '</ul>';
+	echo '</div>';
+
+	// Section 2: Cache-Konfiguration
+	echo '<h2>' . esc_html( 'Cache-Konfiguration' ) . '</h2>';
+	echo '<p>' . esc_html( 'Anleitung für die gängigsten Caching-Plugins:' ) . '</p>';
+	echo '<table class="llm-config-table wp-list-table widefat striped">';
+	echo '<thead><tr><th>' . esc_html( 'Caching Plugin' ) . '</th><th>' . esc_html( 'Konfigurationsschritte' ) . '</th></tr></thead>';
+	echo '<tbody>';
+
+	$configs = array(
+		'WP Rocket'       => '1. Gehe zu Einstellungen → WP Rocket → Erweiterte Regeln. 2. Finde "Cache nicht anlegen für User Agents". 3. Füge die Bot-Patterns von unten ein (alle auf einmal). 4. Speichern und Cache leeren.',
+		'LiteSpeed Cache'  => '1. Navigiere zu LiteSpeed Cache → Cache → Ausschlüsse. 2. Finde "User Agents nicht cachen". 3. Füge jeden Bot-Pattern in eine eigene Zeile ein. 4. Klicke "Änderungen speichern".',
+		'W3 Total Cache'   => '1. Gehe zu Performance → Page Cache. 2. Scrolle zum Abschnitt "Erweitert". 3. Finde "Abgelehnte User Agents". 4. Füge die Patterns ein (eine pro Zeile). 5. Alle Einstellungen speichern und Cache leeren.',
+		'WP Super Cache'   => '1. Gehe zu Einstellungen → WP Super Cache → Erweitert. 2. Finde "Abgelehnte User Agents". 3. Füge die Bot-Patterns ein. 4. Klicke "Status aktualisieren".',
+		'Cloudflare'       => '1. Gehe zu Caching → Konfiguration. 2. Erstelle eine Cache-Regel. 3. Bedingung: User Agent enthält eines der Patterns. 4. Aktion: Cache umgehen.',
+	);
+
+	foreach ( $configs as $plugin => $steps ) {
+		echo '<tr>';
+		echo '<td><strong>' . esc_html( $plugin ) . '</strong></td>';
+		echo '<td>' . esc_html( $steps ) . '</td>';
+		echo '</tr>';
+	}
+
+	echo '</tbody></table>';
+
+	// Section 3: Bot-Patterns zum Kopieren
+	echo '<h2>' . esc_html( 'Bot-Patterns zum Kopieren' ) . '</h2>';
+	echo '<p>' . esc_html( 'Kopiere diese Patterns in die Einstellungen deines Caching-Plugins:' ) . '</p>';
+	echo '<div class="llm-copyable-wrapper">';
+	echo '<textarea class="llm-copyable" id="llm-bot-patterns" readonly>' . esc_textarea( $plain ) . '</textarea>';
+	echo '<button type="button" class="button llm-copy-btn" data-target="llm-bot-patterns">' . esc_html( 'Alle kopieren' ) . '</button>';
+	echo '</div>';
+
+	// Section 4: Alternative Formate
+	echo '<h2>' . esc_html( 'Alternative Formate' ) . '</h2>';
+	echo '<p>' . esc_html( 'Für Regex-basierte Systeme:' ) . '</p>';
+	echo '<div class="llm-copyable-wrapper">';
+	echo '<textarea class="llm-copyable" id="llm-bot-regex" readonly>' . esc_textarea( $regex ) . '</textarea>';
+	echo '<button type="button" class="button llm-copy-btn" data-target="llm-bot-regex">' . esc_html( 'Regex kopieren' ) . '</button>';
+	echo '</div>';
+
+	echo '<div class="llm-copyable-wrapper">';
+	echo '<textarea class="llm-copyable" id="llm-bot-wildcards" readonly>' . esc_textarea( $wilds ) . '</textarea>';
+	echo '<button type="button" class="button llm-copy-btn" data-target="llm-bot-wildcards">' . esc_html( 'Wildcards kopieren' ) . '</button>';
+	echo '</div>';
+
+	echo '</div>';
 }

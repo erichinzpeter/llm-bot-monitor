@@ -107,10 +107,56 @@
 		}
 	}
 
+	/* ── Copy to Clipboard ── */
+	function setupCopyButtons() {
+		document.querySelectorAll('.llm-copy-btn').forEach(function(btn) {
+			btn.addEventListener('click', function() {
+				var targetId = this.getAttribute('data-target');
+				var textarea = document.getElementById(targetId);
+				if (!textarea) return;
+
+				var text = textarea.value;
+				var button = this;
+				var originalText = button.textContent;
+
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(text).then(function() {
+						button.textContent = 'Kopiert!';
+						button.classList.add('copied');
+						setTimeout(function() {
+							button.textContent = originalText;
+							button.classList.remove('copied');
+						}, 2000);
+					}).catch(function() {
+						textarea.select();
+						document.execCommand('copy');
+						button.textContent = 'Kopiert!';
+						button.classList.add('copied');
+						setTimeout(function() {
+							button.textContent = originalText;
+							button.classList.remove('copied');
+						}, 2000);
+					});
+				} else {
+					// Fallback
+					textarea.select();
+					document.execCommand('copy');
+					button.textContent = 'Kopiert!';
+					button.classList.add('copied');
+					setTimeout(function() {
+						button.textContent = originalText;
+						button.classList.remove('copied');
+					}, 2000);
+				}
+			});
+		});
+	}
+
 	/* ── Init ── */
 	document.addEventListener('DOMContentLoaded', function () {
 		drawChart();
 		setupSelectAll();
+		setupCopyButtons();
 	});
 
 	// Redraw chart on resize

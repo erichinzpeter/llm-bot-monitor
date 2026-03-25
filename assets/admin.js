@@ -1,5 +1,5 @@
 /**
- * LLM Bot Monitor — Admin Dashboard JS — v2.1.0
+ * LLM Bot Monitor — Admin Dashboard JS — v2.2.0
  * Canvas bar chart + select-all checkbox
  */
 (function () {

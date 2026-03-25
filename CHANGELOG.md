@@ -3,6 +3,19 @@
 Development changelog tracking code review findings and fixes.
 Serves as a learning reference for future iterations.
 
+## v2.2.0 — 2026-03-25
+
+Full English UI and Bot Overview redesign.
+
+### Changes
+
+- **Full English UI** — All German strings replaced across every tab: tab names (Bot Overview, AI Visibility, Configuration), intro texts, filter labels, table headers, stat card labels, empty states, and all config tab content including cache setup instructions
+- **Bot Overview redesign** — Replaced 10 separate tables (each with its own column header row) with a single unified table. Provider names are now rendered as full-width separator rows (`tr.llm-provider-header`), eliminating the repetitive "Bot / Category / Hits / Last seen" header that appeared once per provider
+- **Provider order updated** — `$provider_order` now matches the current 10 active providers; defunct entries (Amazon, Cohere, Diffbot, You.com, AI2, SEO/Data, Other) removed
+- **CSS cleanup** — Removed unused `.llm-provider-group` and `.llm-bot-row` styles; added `tr.llm-provider-header` style
+
+---
+
 ## v2.1.0 — 2026-03-25
 
 Bot list focused and corrected. Reduced from 44 to 19 bots.

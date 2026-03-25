@@ -3,7 +3,7 @@
  * Plugin Name: LLM Bot Monitor
  * Plugin URI:  https://github.com/erichinzpeter/llm-bot-monitor
  * Description: Tracks AI/LLM bot crawlers visiting your site. GDPR-compliant — only bot traffic is logged, never human visitors.
- * Version:     2.1.0
+ * Version:     2.2.0
  * Author:      Eric Hinzpeter
  * Author URI:  https://eric-hinzpeter.de
  * License:     GPL-2.0-or-later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LLM_BOT_MONITOR_VERSION', '2.1.0' );
+define( 'LLM_BOT_MONITOR_VERSION', '2.2.0' );
 define( 'LLM_BOT_MONITOR_TABLE', 'llm_bot_log' );
 
 /* ==========================================================================
@@ -511,9 +511,9 @@ function llm_bot_monitor_render_page(): void {
 	$tab  = sanitize_key( $_GET['tab'] ?? 'logs' );
 	$tabs = array(
 		'logs'       => 'Crawler Logs',
-		'bots'       => 'Bot-Übersicht',
-		'visibility' => 'AI-Sichtbarkeit',
-		'config'     => 'Konfiguration',
+		'bots'       => 'Bot Overview',
+		'visibility' => 'AI Visibility',
+		'config'     => 'Configuration',
 	);
 
 	echo '<div class="wrap">';
@@ -589,7 +589,7 @@ function llm_bot_monitor_render_tab_logs(): void {
 	?>
 	<div class="llm-tab-content">
 
-		<p class="llm-tab-intro">Alle AI- und LLM-Bot-Besuche deiner Website in Echtzeit. Zeigt welche Crawler aktiv sind, welche Seiten sie besuchen und wann sie zuletzt da waren.</p>
+		<p class="llm-tab-intro">All AI and LLM bot visits to your site in real time. Shows which crawlers are active, which pages they visit, and when they were last seen.</p>
 
 		<!-- Stats Cards -->
 		<div class="llm-stats-cards">
@@ -786,64 +786,64 @@ function llm_bot_monitor_render_tab_bots(): void {
 
 	// Desired provider display order.
 	$provider_order = array(
-		'OpenAI', 'Anthropic', 'Google', 'Perplexity', 'Meta', 'Amazon',
-		'ByteDance', 'Apple', 'Cohere', 'Mistral', 'Common Crawl', 'Diffbot',
-		'You.com', 'AI2', 'SEO / Data', 'Other',
+		'OpenAI', 'Anthropic', 'Google', 'Perplexity', 'Meta',
+		'Apple', 'Microsoft', 'ByteDance', 'Common Crawl', 'Mistral',
 	);
 
 	?>
 	<div class="llm-tab-content">
 
-		<p class="llm-tab-intro">Alle 47 getrackten Bots gruppiert nach Anbieter. Grounding-Bots suchen in Echtzeit (z.&nbsp;B. ChatGPT-User), Training-Bots sammeln Daten für zukünftige Modelle (z.&nbsp;B. GPTBot).</p>
+		<p class="llm-tab-intro">All 19 tracked bots grouped by provider. Grounding bots search in real time (e.g. ChatGPT-User); Training bots collect data for future models (e.g. GPTBot).</p>
 
 		<!-- Period filter -->
 		<form method="get" class="llm-filter-bar">
 			<input type="hidden" name="page" value="llm-bot-monitor">
 			<input type="hidden" name="tab" value="bots">
 			<label>
-				Zeitraum
+				Period
 				<select name="period">
 					<?php foreach ( $allowed_periods as $p ) : ?>
 						<option value="<?php echo esc_attr( $p ); ?>" <?php selected( $period, $p ); ?>>
-							<?php echo esc_html( $p . ' Tage' ); ?>
+							<?php echo esc_html( $p . ' days' ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
 			</label>
-			<button type="submit" class="button button-primary">Anzeigen</button>
+			<button type="submit" class="button button-primary">Show</button>
 		</form>
 
-		<?php foreach ( $provider_order as $provider_name ) : ?>
-			<?php if ( empty( $providers[ $provider_name ] ) ) continue; ?>
-			<div class="llm-provider-group">
-				<h3><?php echo esc_html( $provider_name ); ?></h3>
-				<table class="wp-list-table widefat striped">
-					<thead>
-						<tr>
-							<th>Bot</th>
-							<th>Kategorie</th>
-							<th>Hits</th>
-							<th>Zuletzt gesehen</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $providers[ $provider_name ] as $key => $meta ) :
-							$bot_display = $meta['name'];
-							$stats       = $overview[ $bot_display ] ?? null;
-							$has_hits    = $stats !== null && $stats['hits'] > 0;							$badge_class = $meta['category'] === 'grounding' ? 'llm-badge-grounding' : 'llm-badge-training';
-							$badge_label = $meta['category'] === 'grounding' ? 'Grounding' : 'Training';
-						?>
-						<tr<?php echo $has_hits ? '' : ' class="llm-bot-inactive"'; ?>>
-							<td><?php echo esc_html( $bot_display ); ?></td>
-							<td><span class="llm-category-badge <?php echo esc_attr( $badge_class ); ?>"><?php echo esc_html( $badge_label ); ?></span></td>
-							<td><?php echo $has_hits ? esc_html( number_format_i18n( $stats['hits'] ) ) : '&mdash;'; ?></td>
-							<td><?php echo $has_hits ? esc_html( wp_date( 'Y-m-d H:i:s', strtotime( $stats['last_seen'] . ' UTC' ) ) ) : '&mdash;'; ?></td>
-						</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-			</div>
-		<?php endforeach; ?>
+		<table class="wp-list-table widefat striped">
+			<thead>
+				<tr>
+					<th>Bot</th>
+					<th>Category</th>
+					<th>Hits</th>
+					<th>Last seen</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $provider_order as $provider_name ) : ?>
+					<?php if ( empty( $providers[ $provider_name ] ) ) continue; ?>
+					<tr class="llm-provider-header">
+						<td colspan="4"><?php echo esc_html( $provider_name ); ?></td>
+					</tr>
+					<?php foreach ( $providers[ $provider_name ] as $key => $meta ) :
+						$bot_display = $meta['name'];
+						$stats       = $overview[ $bot_display ] ?? null;
+						$has_hits    = $stats !== null && $stats['hits'] > 0;
+						$badge_class = $meta['category'] === 'grounding' ? 'llm-badge-grounding' : 'llm-badge-training';
+						$badge_label = $meta['category'] === 'grounding' ? 'Grounding' : 'Training';
+					?>
+					<tr<?php echo $has_hits ? '' : ' class="llm-bot-inactive"'; ?>>
+						<td><?php echo esc_html( $bot_display ); ?></td>
+						<td><span class="llm-category-badge <?php echo esc_attr( $badge_class ); ?>"><?php echo esc_html( $badge_label ); ?></span></td>
+						<td><?php echo $has_hits ? esc_html( number_format_i18n( $stats['hits'] ) ) : '&mdash;'; ?></td>
+						<td><?php echo $has_hits ? esc_html( wp_date( 'Y-m-d H:i:s', strtotime( $stats['last_seen'] . ' UTC' ) ) ) : '&mdash;'; ?></td>
+					</tr>
+					<?php endforeach; ?>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
 
 	</div>
 	<?php
@@ -869,18 +869,18 @@ function llm_bot_monitor_render_tab_visibility(): void {
 	?>
 	<div class="llm-tab-content">
 
-	<p class="llm-tab-intro">Welche deiner Seiten wurden von AI-Crawlern besucht? Der AI-Score zeigt, wie viele der aktiven Bots im gewählten Zeitraum eine Seite gefunden haben&nbsp;– 100&nbsp;% bedeutet, alle aktiven Bots waren dort.</p>
+	<p class="llm-tab-intro">Which of your pages have been visited by AI crawlers? The AI Score shows how many active bots visited a page in the selected period — 100% means all active bots were there.</p>
 
 	<!-- Period Filter -->
 	<form method="get" class="llm-filter-bar">
 		<input type="hidden" name="page" value="llm-bot-monitor">
 		<input type="hidden" name="tab" value="visibility">
 		<label>
-			Zeitraum
+			Period
 			<select name="period">
-				<option value="7" <?php selected( $period, 7 ); ?>>7 Tage</option>
-				<option value="30" <?php selected( $period, 30 ); ?>>30 Tage</option>
-				<option value="90" <?php selected( $period, 90 ); ?>>90 Tage</option>
+				<option value="7" <?php selected( $period, 7 ); ?>>7 days</option>
+				<option value="30" <?php selected( $period, 30 ); ?>>30 days</option>
+				<option value="90" <?php selected( $period, 90 ); ?>>90 days</option>
 			</select>
 		</label>
 		<button type="submit" class="button button-primary">Filter</button>
@@ -889,17 +889,17 @@ function llm_bot_monitor_render_tab_visibility(): void {
 	<!-- Summary Cards -->
 	<div class="llm-visibility-summary">
 		<div class="llm-stat-card">
-			<h3>UNSICHTBAR FÜR AI</h3>
+			<h3>INVISIBLE TO AI</h3>
 			<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $invisible ) ); ?></span>
-			<span class="llm-stat-desc">Seiten ohne Bot-Besuch</span>
+			<span class="llm-stat-desc">pages with no bot visits</span>
 		</div>
 		<div class="llm-stat-card">
-			<h3>AI-ABDECKUNG</h3>
+			<h3>AI COVERAGE</h3>
 			<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $coverage ) ); ?>%</span>
-			<span class="llm-stat-desc"><?php echo esc_html( number_format_i18n( $visible ) ); ?> von <?php echo esc_html( number_format_i18n( $total_pages ) ); ?> Seiten</span>
+			<span class="llm-stat-desc"><?php echo esc_html( number_format_i18n( $visible ) ); ?> of <?php echo esc_html( number_format_i18n( $total_pages ) ); ?> pages</span>
 		</div>
 		<div class="llm-stat-card">
-			<h3>VERÖFFENTLICHTE SEITEN</h3>
+			<h3>PUBLISHED PAGES</h3>
 			<span class="llm-stat-number"><?php echo esc_html( number_format_i18n( $total_pages ) ); ?></span>
 			<span class="llm-stat-desc">Pages &amp; Posts</span>
 		</div>
@@ -909,15 +909,15 @@ function llm_bot_monitor_render_tab_visibility(): void {
 	<table class="wp-list-table widefat striped">
 		<thead>
 			<tr>
-				<th class="manage-column">Titel</th>
-				<th class="manage-column">Typ</th>
+				<th class="manage-column">Title</th>
+				<th class="manage-column">Type</th>
 				<th class="manage-column">AI Score</th>
-				<th class="manage-column">Veröffentlicht</th>
+				<th class="manage-column">Published</th>
 			</tr>
 		</thead>
 		<tbody>
 			<?php if ( empty( $pages ) ) : ?>
-				<tr><td colspan="4">Keine veröffentlichten Inhalte gefunden.</td></tr>
+				<tr><td colspan="4">No published content found.</td></tr>
 			<?php else : ?>
 				<?php foreach ( $pages as $row ) : ?>
 					<?php
@@ -928,7 +928,7 @@ function llm_bot_monitor_render_tab_visibility(): void {
 					} else {
 						$score_class = 'llm-score-low';
 					}
-					$type_label = $row['type'] === 'page' ? 'Seite' : 'Beitrag';
+					$type_label = $row['type'] === 'page' ? 'Page' : 'Post';
 					?>
 					<tr>
 						<td><a href="<?php echo esc_url( $row['permalink'] ); ?>" target="_blank"><?php echo esc_html( $row['title'] ); ?></a></td>
@@ -957,31 +957,31 @@ function llm_bot_monitor_render_tab_config(): void {
 
 	echo '<div class="llm-tab-content">';
 
-	echo '<p class="llm-tab-intro">' . esc_html( 'Damit Caching-Plugins die Bot-Erkennung nicht blockieren, müssen AI-Bots vom Cache ausgeschlossen werden. Hier findest du fertige Konfigurationsanleitungen und kopierfertige Bot-Patterns für die gängigsten Plugins.' ) . '</p>';
+	echo '<p class="llm-tab-intro">' . esc_html( 'To prevent caching plugins from blocking bot detection, AI bots must be excluded from cache. Below you\'ll find configuration guides and copy-ready bot patterns for the most common plugins.' ) . '</p>';
 
 	// Section 1: Info box
 	echo '<div class="llm-info-box">';
-	echo '<h3>' . esc_html( 'Warum Bots vom Cache ausschließen?' ) . '</h3>';
+	echo '<h3>' . esc_html( 'Why exclude bots from cache?' ) . '</h3>';
 	echo '<ul class="llm-why-list">';
-	echo '<li><strong>' . esc_html( 'Tracking-Genauigkeit' ) . '</strong> — ' . esc_html( 'Gecachte Seiten umgehen die Bot-Erkennung und verfälschen deine Statistiken' ) . '</li>';
-	echo '<li><strong>' . esc_html( 'Ressourcen sparen' ) . '</strong> — ' . esc_html( 'AI-Bots brauchen keine gecachten Inhalte, du sparst Speicher und Rechenleistung' ) . '</li>';
-	echo '<li><strong>' . esc_html( 'Echtzeit-Daten' ) . '</strong> — ' . esc_html( 'Bot-Aktivität wird sofort erfasst, nicht erst nach Cache-Ablauf' ) . '</li>';
+	echo '<li><strong>' . esc_html( 'Tracking accuracy' ) . '</strong> — ' . esc_html( 'Cached pages bypass bot detection and skew your statistics' ) . '</li>';
+	echo '<li><strong>' . esc_html( 'Save resources' ) . '</strong> — ' . esc_html( 'AI bots don\'t need cached content, so you save storage and processing power' ) . '</li>';
+	echo '<li><strong>' . esc_html( 'Real-time data' ) . '</strong> — ' . esc_html( 'Bot activity is captured immediately, not after the cache expires' ) . '</li>';
 	echo '</ul>';
 	echo '</div>';
 
-	// Section 2: Cache-Konfiguration
-	echo '<h2>' . esc_html( 'Cache-Konfiguration' ) . '</h2>';
-	echo '<p>' . esc_html( 'Anleitung für die gängigsten Caching-Plugins:' ) . '</p>';
+	// Section 2: Cache Configuration
+	echo '<h2>' . esc_html( 'Cache Configuration' ) . '</h2>';
+	echo '<p>' . esc_html( 'Setup guide for the most common caching plugins:' ) . '</p>';
 	echo '<table class="llm-config-table wp-list-table widefat striped">';
-	echo '<thead><tr><th>' . esc_html( 'Caching Plugin' ) . '</th><th>' . esc_html( 'Konfigurationsschritte' ) . '</th></tr></thead>';
+	echo '<thead><tr><th>' . esc_html( 'Caching Plugin' ) . '</th><th>' . esc_html( 'Configuration Steps' ) . '</th></tr></thead>';
 	echo '<tbody>';
 
 	$configs = array(
-		'WP Rocket'       => '1. Gehe zu Einstellungen → WP Rocket → Erweiterte Regeln. 2. Finde "Cache nicht anlegen für User Agents". 3. Füge die Bot-Patterns von unten ein (alle auf einmal). 4. Speichern und Cache leeren.',
-		'LiteSpeed Cache'  => '1. Navigiere zu LiteSpeed Cache → Cache → Ausschlüsse. 2. Finde "User Agents nicht cachen". 3. Füge jeden Bot-Pattern in eine eigene Zeile ein. 4. Klicke "Änderungen speichern".',
-		'W3 Total Cache'   => '1. Gehe zu Performance → Page Cache. 2. Scrolle zum Abschnitt "Erweitert". 3. Finde "Abgelehnte User Agents". 4. Füge die Patterns ein (eine pro Zeile). 5. Alle Einstellungen speichern und Cache leeren.',
-		'WP Super Cache'   => '1. Gehe zu Einstellungen → WP Super Cache → Erweitert. 2. Finde "Abgelehnte User Agents". 3. Füge die Bot-Patterns ein. 4. Klicke "Status aktualisieren".',
-		'Cloudflare'       => '1. Gehe zu Caching → Konfiguration. 2. Erstelle eine Cache-Regel. 3. Bedingung: User Agent enthält eines der Patterns. 4. Aktion: Cache umgehen.',
+		'WP Rocket'       => '1. Go to Settings → WP Rocket → Advanced Rules. 2. Find "Never Cache User Agent(s)". 3. Paste the bot patterns from below (all at once). 4. Save and clear cache.',
+		'LiteSpeed Cache' => '1. Navigate to LiteSpeed Cache → Cache → Excludes. 2. Find "Do Not Cache User Agents". 3. Add each bot pattern on its own line. 4. Click "Save Changes".',
+		'W3 Total Cache'  => '1. Go to Performance → Page Cache. 2. Scroll to the "Advanced" section. 3. Find "Rejected User Agents". 4. Paste the patterns (one per line). 5. Save all settings and clear cache.',
+		'WP Super Cache'  => '1. Go to Settings → WP Super Cache → Advanced. 2. Find "Rejected User Agents". 3. Paste the bot patterns. 4. Click "Update Status".',
+		'Cloudflare'      => '1. Go to Caching → Configuration. 2. Create a Cache Rule. 3. Condition: User Agent contains one of the patterns. 4. Action: Bypass cache.',
 	);
 
 	foreach ( $configs as $plugin => $steps ) {
@@ -993,25 +993,25 @@ function llm_bot_monitor_render_tab_config(): void {
 
 	echo '</tbody></table>';
 
-	// Section 3: Bot-Patterns zum Kopieren
-	echo '<h2>' . esc_html( 'Bot-Patterns zum Kopieren' ) . '</h2>';
-	echo '<p>' . esc_html( 'Kopiere diese Patterns in die Einstellungen deines Caching-Plugins:' ) . '</p>';
+	// Section 3: Bot Patterns
+	echo '<h2>' . esc_html( 'Bot Patterns' ) . '</h2>';
+	echo '<p>' . esc_html( 'Copy these patterns into your caching plugin settings:' ) . '</p>';
 	echo '<div class="llm-copyable-wrapper">';
 	echo '<textarea class="llm-copyable" id="llm-bot-patterns" readonly>' . esc_textarea( $plain ) . '</textarea>';
-	echo '<button type="button" class="button llm-copy-btn" data-target="llm-bot-patterns">' . esc_html( 'Alle kopieren' ) . '</button>';
+	echo '<button type="button" class="button llm-copy-btn" data-target="llm-bot-patterns">' . esc_html( 'Copy all' ) . '</button>';
 	echo '</div>';
 
-	// Section 4: Alternative Formate
-	echo '<h2>' . esc_html( 'Alternative Formate' ) . '</h2>';
-	echo '<p>' . esc_html( 'Für Regex-basierte Systeme:' ) . '</p>';
+	// Section 4: Alternative Formats
+	echo '<h2>' . esc_html( 'Alternative Formats' ) . '</h2>';
+	echo '<p>' . esc_html( 'For regex-based systems:' ) . '</p>';
 	echo '<div class="llm-copyable-wrapper">';
 	echo '<textarea class="llm-copyable" id="llm-bot-regex" readonly>' . esc_textarea( $regex ) . '</textarea>';
-	echo '<button type="button" class="button llm-copy-btn" data-target="llm-bot-regex">' . esc_html( 'Regex kopieren' ) . '</button>';
+	echo '<button type="button" class="button llm-copy-btn" data-target="llm-bot-regex">' . esc_html( 'Copy regex' ) . '</button>';
 	echo '</div>';
 
 	echo '<div class="llm-copyable-wrapper">';
 	echo '<textarea class="llm-copyable" id="llm-bot-wildcards" readonly>' . esc_textarea( $wilds ) . '</textarea>';
-	echo '<button type="button" class="button llm-copy-btn" data-target="llm-bot-wildcards">' . esc_html( 'Wildcards kopieren' ) . '</button>';
+	echo '<button type="button" class="button llm-copy-btn" data-target="llm-bot-wildcards">' . esc_html( 'Copy wildcards' ) . '</button>';
 	echo '</div>';
 
 	echo '</div>';

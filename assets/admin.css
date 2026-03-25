@@ -1,4 +1,4 @@
-/* LLM Bot Monitor — Admin Dashboard Styles — v2.1.0 */
+/* LLM Bot Monitor — Admin Dashboard Styles — v2.2.0 */
 
 /* Header */
 .llm-header {
@@ -172,33 +172,13 @@
 }
 
 /* Bot Overview Tab */
-.llm-provider-group {
-	background: #fff;
-	border: 1px solid #c3c4c7;
-	border-radius: 4px;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
-	margin-bottom: 16px;
-}
-
-.llm-provider-group h3 {
-	font-size: 16px;
+tr.llm-provider-header td {
 	font-weight: 600;
+	font-size: 13px;
 	color: #1d2327;
-	margin: 0;
-	padding: 20px 24px;
-	border-bottom: 1px solid #f0f0f1;
-}
-
-.llm-bot-row {
-	padding: 16px 24px;
-	border-bottom: 1px solid #f0f0f1;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.llm-bot-row:last-child {
-	border-bottom: none;
+	background: #f6f7f7 !important;
+	padding: 10px 12px;
+	border-top: 2px solid #c3c4c7;
 }
 
 tr.llm-bot-inactive {

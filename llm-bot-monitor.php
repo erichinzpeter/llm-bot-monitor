@@ -3,7 +3,7 @@
  * Plugin Name: LLM Bot Monitor
  * Plugin URI:  https://github.com/erichinzpeter/llm-bot-monitor
  * Description: Tracks AI/LLM bot crawlers visiting your site. GDPR-compliant — only bot traffic is logged, never human visitors.
- * Version:     2.0.0
+ * Version:     2.1.0
  * Author:      Eric Hinzpeter
  * Author URI:  https://eric-hinzpeter.de
  * License:     GPL-2.0-or-later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LLM_BOT_MONITOR_VERSION', '2.0.0' );
+define( 'LLM_BOT_MONITOR_VERSION', '2.1.0' );
 define( 'LLM_BOT_MONITOR_TABLE', 'llm_bot_log' );
 
 /* ==========================================================================
@@ -44,6 +44,11 @@ function llm_bot_monitor_activate(): void {
 
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( $sql );
+
+	// Remove log entries for bots no longer in the active list.
+	$known_names    = array_column( llm_bot_monitor_bot_list(), 'name' );
+	$placeholders   = implode( ', ', array_fill( 0, count( $known_names ), '%s' ) );
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE bot_name NOT IN ({$placeholders})", $known_names ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 	update_option( 'llm_bot_monitor_db_version', LLM_BOT_MONITOR_VERSION );
 
@@ -75,86 +80,43 @@ add_action( 'admin_init', 'llm_bot_monitor_check_db' );
 function llm_bot_monitor_bot_list(): array {
 	return array(
 		// OpenAI
-		'GPTBot'                 => array( 'name' => 'GPTBot',                 'provider' => 'OpenAI',       'category' => 'training' ),
-		'ChatGPT-User'          => array( 'name' => 'ChatGPT-User',          'provider' => 'OpenAI',       'category' => 'grounding' ),
-		'OAI-SearchBot'         => array( 'name' => 'OAI-SearchBot',         'provider' => 'OpenAI',       'category' => 'grounding' ),
+		'GPTBot'               => array( 'name' => 'GPTBot',               'provider' => 'OpenAI',       'category' => 'training' ),
+		'ChatGPT-User'         => array( 'name' => 'ChatGPT-User',         'provider' => 'OpenAI',       'category' => 'grounding' ),
+		'OAI-SearchBot'        => array( 'name' => 'OAI-SearchBot',        'provider' => 'OpenAI',       'category' => 'grounding' ),
 
 		// Anthropic
-		'ClaudeBot'             => array( 'name' => 'ClaudeBot',             'provider' => 'Anthropic',    'category' => 'training' ),
-		'Claude-Web'            => array( 'name' => 'Claude-Web',            'provider' => 'Anthropic',    'category' => 'grounding' ),
-		'Claude-SearchBot'      => array( 'name' => 'Claude-SearchBot',      'provider' => 'Anthropic',    'category' => 'grounding' ),
-		'anthropic-ai'          => array( 'name' => 'Anthropic AI',          'provider' => 'Anthropic',    'category' => 'training' ),
+		'ClaudeBot'            => array( 'name' => 'ClaudeBot',            'provider' => 'Anthropic',    'category' => 'training' ),
+		'Claude-User'          => array( 'name' => 'Claude-User',          'provider' => 'Anthropic',    'category' => 'grounding' ),
+		'Claude-SearchBot'     => array( 'name' => 'Claude-SearchBot',     'provider' => 'Anthropic',    'category' => 'grounding' ),
 
-		// Google AI
-		'Google-Extended'       => array( 'name' => 'Google-Extended',       'provider' => 'Google',       'category' => 'training' ),
-		'GoogleOther'           => array( 'name' => 'GoogleOther',           'provider' => 'Google',       'category' => 'training' ),
-		'GoogleOther-Image'     => array( 'name' => 'GoogleOther-Image',     'provider' => 'Google',       'category' => 'training' ),
-		'GoogleOther-Video'     => array( 'name' => 'GoogleOther-Video',     'provider' => 'Google',       'category' => 'training' ),
-		'Google-CloudVertexBot' => array( 'name' => 'Google-CloudVertexBot', 'provider' => 'Google',       'category' => 'training' ),
-		'Gemini-Deep-Research'  => array( 'name' => 'Gemini-Deep-Research',  'provider' => 'Google',       'category' => 'grounding' ),
-		'Google-Safety'         => array( 'name' => 'Google-Safety',         'provider' => 'Google',       'category' => 'training' ),
-		'GoogleAgent-Mariner'   => array( 'name' => 'GoogleAgent-Mariner',   'provider' => 'Google',       'category' => 'grounding' ),
+		// Google
+		'Google-Extended'      => array( 'name' => 'Google-Extended',      'provider' => 'Google',       'category' => 'training' ),
+		'Gemini-Deep-Research' => array( 'name' => 'Gemini-Deep-Research', 'provider' => 'Google',       'category' => 'grounding' ),
+		'Google-Agent'         => array( 'name' => 'Google-Agent',         'provider' => 'Google',       'category' => 'grounding' ),
 
 		// Perplexity
-		'PerplexityBot'         => array( 'name' => 'PerplexityBot',         'provider' => 'Perplexity',   'category' => 'grounding' ),
-		'Perplexity-User'       => array( 'name' => 'Perplexity-User',       'provider' => 'Perplexity',   'category' => 'grounding' ),
+		'PerplexityBot'        => array( 'name' => 'PerplexityBot',        'provider' => 'Perplexity',   'category' => 'grounding' ),
+		'Perplexity-User'      => array( 'name' => 'Perplexity-User',      'provider' => 'Perplexity',   'category' => 'grounding' ),
 
 		// Meta
-		'FacebookBot'           => array( 'name' => 'FacebookBot',           'provider' => 'Meta',         'category' => 'training' ),
-		'Meta-ExternalAgent'    => array( 'name' => 'Meta-ExternalAgent',    'provider' => 'Meta',         'category' => 'grounding' ),
-		'Meta-ExternalFetcher'  => array( 'name' => 'Meta-ExternalFetcher',  'provider' => 'Meta',         'category' => 'training' ),
-
-		// Amazon
-		'Amazonbot'             => array( 'name' => 'Amazonbot',             'provider' => 'Amazon',       'category' => 'training' ),
-		'NovaAct'               => array( 'name' => 'NovaAct',               'provider' => 'Amazon',       'category' => 'grounding' ),
-
-		// ByteDance
-		'Bytespider'            => array( 'name' => 'Bytespider',            'provider' => 'ByteDance',    'category' => 'training' ),
+		'Meta-ExternalAgent'   => array( 'name' => 'Meta-ExternalAgent',   'provider' => 'Meta',         'category' => 'training' ),
+		'Meta-ExternalFetcher' => array( 'name' => 'Meta-ExternalFetcher', 'provider' => 'Meta',         'category' => 'grounding' ),
 
 		// Apple
-		'Applebot-Extended'     => array( 'name' => 'Applebot-Extended',     'provider' => 'Apple',        'category' => 'training' ),
+		'Applebot-Extended'    => array( 'name' => 'Applebot-Extended',    'provider' => 'Apple',        'category' => 'training' ),
+		'Applebot'             => array( 'name' => 'Applebot',             'provider' => 'Apple',        'category' => 'grounding' ),
+
+		// Microsoft
+		'Bingbot'              => array( 'name' => 'Bingbot',              'provider' => 'Microsoft',    'category' => 'grounding' ),
+
+		// ByteDance
+		'Bytespider'           => array( 'name' => 'Bytespider',           'provider' => 'ByteDance',    'category' => 'training' ),
 
 		// Common Crawl
-		'CCBot'                 => array( 'name' => 'CCBot',                 'provider' => 'Common Crawl', 'category' => 'training' ),
-
-		// Diffbot
-		'Diffbot'               => array( 'name' => 'Diffbot',               'provider' => 'Diffbot',      'category' => 'training' ),
-
-		// SEO / Data
-		'SemrushBot'            => array( 'name' => 'SemrushBot',            'provider' => 'SEO / Data',   'category' => 'training' ),
-		'AhrefsBot'             => array( 'name' => 'AhrefsBot',             'provider' => 'SEO / Data',   'category' => 'training' ),
-		'DotBot'                => array( 'name' => 'DotBot',                'provider' => 'SEO / Data',   'category' => 'training' ),
-		'MJ12bot'               => array( 'name' => 'MJ12bot',               'provider' => 'SEO / Data',   'category' => 'training' ),
-		'DataForSeoBot'         => array( 'name' => 'DataForSeoBot',         'provider' => 'SEO / Data',   'category' => 'training' ),
-
-		// You.com
-		'YouBot'                => array( 'name' => 'YouBot',                'provider' => 'You.com',      'category' => 'grounding' ),
-
-		// AI2
-		'AI2Bot'                => array( 'name' => 'AI2Bot',                'provider' => 'AI2',          'category' => 'training' ),
-
-		// Cohere
-		'Cohere-ai'             => array( 'name' => 'Cohere AI',             'provider' => 'Cohere',       'category' => 'grounding' ),
-		'cohere-training'       => array( 'name' => 'Cohere Training',       'provider' => 'Cohere',       'category' => 'training' ),
+		'CCBot'                => array( 'name' => 'CCBot',                'provider' => 'Common Crawl', 'category' => 'training' ),
 
 		// Mistral
-		'MistralBot'            => array( 'name' => 'MistralBot',            'provider' => 'Mistral',      'category' => 'training' ),
-
-		// Other
-		'Timpibot'              => array( 'name' => 'Timpibot',              'provider' => 'Other',        'category' => 'training' ),
-		'PetalBot'              => array( 'name' => 'PetalBot',              'provider' => 'Other',        'category' => 'training' ),
-		'iaskspider'            => array( 'name' => 'iAsk Spider',           'provider' => 'Other',        'category' => 'training' ),
-		'Kangaroo Bot'          => array( 'name' => 'Kangaroo Bot',          'provider' => 'Other',        'category' => 'training' ),
-		'Velenpublicwebcrawler' => array( 'name' => 'Velen Crawler',         'provider' => 'Other',        'category' => 'training' ),
-		'Webzio-Extended'       => array( 'name' => 'Webzio-Extended',       'provider' => 'Other',        'category' => 'training' ),
-		'omgili'                => array( 'name' => 'Omgili',                'provider' => 'Other',        'category' => 'training' ),
-		'Nicecrawler'           => array( 'name' => 'Nicecrawler',           'provider' => 'Other',        'category' => 'training' ),
-		'FriendlyCrawler'       => array( 'name' => 'FriendlyCrawler',       'provider' => 'Other',        'category' => 'training' ),
-		'ImagesiftBot'          => array( 'name' => 'ImagesiftBot',          'provider' => 'Other',        'category' => 'training' ),
-		'img2dataset'           => array( 'name' => 'img2dataset',           'provider' => 'Other',        'category' => 'training' ),
-		'Devin'                 => array( 'name' => 'Devin',                 'provider' => 'Other',        'category' => 'training' ),
-		'LinerBot'              => array( 'name' => 'LinerBot',              'provider' => 'Other',        'category' => 'training' ),
-		'QualifiedBot'          => array( 'name' => 'QualifiedBot',          'provider' => 'Other',        'category' => 'training' ),
+		'MistralBot'           => array( 'name' => 'MistralBot',           'provider' => 'Mistral',      'category' => 'training' ),
 	);
 }
 

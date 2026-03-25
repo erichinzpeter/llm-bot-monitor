@@ -3,6 +3,27 @@
 Development changelog tracking code review findings and fixes.
 Serves as a learning reference for future iterations.
 
+## v2.1.0 — 2026-03-25
+
+Bot list focused and corrected. Reduced from 44 to 19 bots.
+
+### Changes
+
+- **Bot list cleanup** — Removed SEO crawlers (Semrush, Ahrefs, DotBot, MJ12bot, DataForSeo), generic Google infrastructure bots (GoogleOther, GoogleOther-Image, GoogleOther-Video, Google-CloudVertexBot, Google-Safety), Facebook link-preview bot, Amazon general crawler, and 14 obscure/unverified "Other" bots
+- **`Claude-Web` → `Claude-User`** — Updated UA token to match current Anthropic naming; old key was still valid for legacy logs but new requests use `Claude-User`
+- **`GoogleAgent-Mariner` → `Google-Agent`** — Corrected to the actual UA token per Google docs; the old key never matched any real request
+- **`Meta-ExternalFetcher` reclassified** — Changed category from `training` to `grounding` (it's used for real-time link fetching in Meta AI, not model training)
+- **Added `Applebot`** — The base Applebot also feeds Apple Intelligence; previously only `Applebot-Extended` was tracked
+- **Added `Bingbot`** — Powers Microsoft Copilot grounding in addition to traditional search indexing
+- **Added `Google-Agent`** — New March 2026 bot for user-triggered agentic tasks (Project Mariner)
+
+- **Log cleanup on upgrade** — `activate()` now deletes log rows whose `bot_name` is no longer in the active bot list, keeping historical data consistent with the current tracking scope. The known-name list is built dynamically from `llm_bot_monitor_bot_list()`.
+- **File header versions** — `admin.js` and `admin.css` now carry the version in their top comment.
+
+**Lesson:** SEO crawlers and general-purpose infrastructure bots belong in a different tool. An LLM monitor should track only bots from AI providers that are either training models or powering AI-generated answers.
+
+---
+
 ## v2.0.0 — 2026-03-24
 
 Major feature release: four-tab admin dashboard, bot categorization, AI visibility scoring, cache configuration guide, and design refresh.

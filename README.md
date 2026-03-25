@@ -4,7 +4,7 @@ WordPress plugin that tracks AI/LLM bot crawlers visiting your site. Install, ac
 
 ## Features
 
-- **Automatic detection** of 47 AI bots categorized as Grounding (real-time search) or Training (data collection)
+- **Automatic detection** of 19 AI bots categorized as Grounding (real-time search) or Training (data collection)
 - **Four-tab admin dashboard** at Tools > LLM Bot Monitor:
   - **Crawler Logs** — stats cards, 30-day bar chart, top bots leaderboard, filterable paginated log table, bulk delete
   - **Bot-Übersicht** — all tracked bots grouped by provider with Grounding/Training badges and hit stats
@@ -43,13 +43,13 @@ After activation, the plugin immediately starts tracking AI bot visits in the ba
 
 ### Tracked Bots
 
-47 bots across two categories:
+19 bots across two categories:
 
-**Grounding** (real-time search/retrieval): ChatGPT-User, OAI-SearchBot, Claude-Web, Claude-SearchBot, PerplexityBot, Perplexity-User, Google-Extended, Gemini-Deep-Research, GoogleAgent-Mariner, Meta-ExternalAgent, NovaAct, YouBot, Cohere-ai
+**Grounding** (real-time search/retrieval): ChatGPT-User, OAI-SearchBot, Claude-User, Claude-SearchBot, PerplexityBot, Perplexity-User, Gemini-Deep-Research, Google-Agent, Meta-ExternalFetcher, Applebot, Bingbot
 
-**Training** (data collection for future models): GPTBot, ClaudeBot, anthropic-ai, GoogleOther, Google-CloudVertexBot, Google-Safety, FacebookBot, Meta-ExternalFetcher, Amazonbot, Bytespider, Applebot-Extended, CCBot, Diffbot, AI2Bot, MistralBot, cohere-training, and more.
+**Training** (data collection for future models): GPTBot, ClaudeBot, Google-Extended, Meta-ExternalAgent, Applebot-Extended, Bytespider, CCBot, MistralBot
 
-Providers: OpenAI, Anthropic, Google, Perplexity, Meta, Amazon, ByteDance, Apple, Cohere, Mistral, Common Crawl, Diffbot, You.com, AI2, and others.
+Providers: OpenAI, Anthropic, Google, Perplexity, Meta, Apple, Microsoft, ByteDance, Mistral, Common Crawl.
 
 ## Privacy & GDPR
 

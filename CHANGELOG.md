@@ -3,6 +3,25 @@
 Development changelog tracking code review findings and fixes.
 Serves as a learning reference for future iterations.
 
+## v2.3.0 — 2026-03-26
+
+Crawler Logs UX: full URL display, CSV export, README credit.
+
+### Changes
+
+- **Full URL as clickable link** — Page column in the Crawler Logs table now shows the complete URL as a link opening in a new tab. Previously URLs were truncated at 300px with ellipsis.
+- **CSV export** — New "Export CSV" button in the filter bar exports all matching log rows (up to 50,000) as a `.csv` file. Respects all active filters (bot, path, IP, date range). Nonce-protected GET request.
+- **README credits** — Added Credits section attributing inspiration to LLM Bot Tracker by Hueston.
+
+### Code Review Findings
+
+- **Nonce before capability check** — Both `llm_bot_monitor_handle_csv_export()` and `llm_bot_monitor_handle_bulk_action()` now call `check_admin_referer()` before `current_user_can()`, matching WordPress security guidance (nonce check costs nothing and eliminates capability lookup on forged requests).
+- **`array_filter` precision** — Replaced `array_filter($filters)` with `array_filter($filters, fn($v) => $v !== '')` to avoid accidentally dropping the string `"0"` from filter URL parameters.
+
+**Lesson:** Nonce verification should always precede capability checks — it's cheaper, eliminates forged requests early, and is the pattern WordPress core uses throughout.
+
+---
+
 ## v2.2.0 — 2026-03-25
 
 Full English UI and Bot Overview redesign.

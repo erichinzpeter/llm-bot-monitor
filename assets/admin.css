@@ -361,11 +361,8 @@ tr.llm-bot-inactive {
 	width: 2.2em;
 }
 
-.wp-list-table td[title] {
-	max-width: 300px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+.wp-list-table .column-page a {
+	word-break: break-all;
 }
 
 /* Pagination */

@@ -3,7 +3,7 @@
  * Plugin Name: LLM Bot Monitor
  * Plugin URI:  https://github.com/erichinzpeter/llm-bot-monitor
  * Description: Tracks AI/LLM bot crawlers visiting your site. GDPR-compliant — only bot traffic is logged, never human visitors.
- * Version:     2.2.0
+ * Version:     2.3.0
  * Author:      Eric Hinzpeter
  * Author URI:  https://eric-hinzpeter.de
  * License:     GPL-2.0-or-later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LLM_BOT_MONITOR_VERSION', '2.2.0' );
+define( 'LLM_BOT_MONITOR_VERSION', '2.3.0' );
 define( 'LLM_BOT_MONITOR_TABLE', 'llm_bot_log' );
 
 /* ==========================================================================
@@ -463,17 +463,92 @@ function llm_bot_monitor_get_visibility_data( int $days = 30 ): array {
 }
 
 /* ==========================================================================
-   6. BULK DELETE HANDLER
+   6. CSV EXPORT
+   ========================================================================== */
+
+function llm_bot_monitor_handle_csv_export(): void {
+	if ( ( $_GET['action'] ?? '' ) !== 'export_csv' ) {
+		return;
+	}
+	check_admin_referer( 'llm_csv_export' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Unauthorized' );
+	}
+
+	global $wpdb;
+	$table  = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
+	$where  = array();
+	$values = array();
+
+	$filters = array(
+		'bot_name'      => sanitize_text_field( $_GET['bot_name'] ?? '' ),
+		'path_contains' => sanitize_text_field( $_GET['path_contains'] ?? '' ),
+		'ip_contains'   => sanitize_text_field( $_GET['ip_contains'] ?? '' ),
+		'date_from'     => sanitize_text_field( $_GET['date_from'] ?? '' ),
+		'date_to'       => sanitize_text_field( $_GET['date_to'] ?? '' ),
+	);
+
+	if ( ! empty( $filters['bot_name'] ) ) {
+		$where[]  = 'bot_name = %s';
+		$values[] = $filters['bot_name'];
+	}
+	if ( ! empty( $filters['path_contains'] ) ) {
+		$where[]  = 'request_url LIKE %s';
+		$values[] = '%' . $wpdb->esc_like( $filters['path_contains'] ) . '%';
+	}
+	if ( ! empty( $filters['ip_contains'] ) ) {
+		$where[]  = 'ip_address LIKE %s';
+		$values[] = '%' . $wpdb->esc_like( $filters['ip_contains'] ) . '%';
+	}
+	if ( ! empty( $filters['date_from'] ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $filters['date_from'] ) ) {
+		$where[]  = 'hit_at >= %s';
+		$values[] = $filters['date_from'] . ' 00:00:00';
+	}
+	if ( ! empty( $filters['date_to'] ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $filters['date_to'] ) ) {
+		$where[]  = 'hit_at <= %s';
+		$values[] = $filters['date_to'] . ' 23:59:59';
+	}
+
+	$where_sql = ! empty( $where ) ? 'WHERE ' . implode( ' AND ', $where ) : '';
+
+	if ( ! empty( $values ) ) {
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT id, hit_at, bot_name, request_url, ip_address, user_agent, status_code FROM {$table} {$where_sql} ORDER BY hit_at DESC LIMIT 50000",
+			$values
+		), ARRAY_A );
+	} else {
+		$rows = $wpdb->get_results(
+			"SELECT id, hit_at, bot_name, request_url, ip_address, user_agent, status_code FROM {$table} ORDER BY hit_at DESC LIMIT 50000",
+			ARRAY_A
+		);
+	}
+
+	$filename = 'llm-bot-log-' . gmdate( 'Y-m-d' ) . '.csv';
+	header( 'Content-Type: text/csv; charset=utf-8' );
+	header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+	header( 'Pragma: no-cache' );
+
+	$out = fopen( 'php://output', 'w' );
+	fputcsv( $out, array( 'id', 'hit_at', 'bot_name', 'request_url', 'ip_address', 'user_agent', 'status_code' ) );
+	foreach ( $rows as $row ) {
+		fputcsv( $out, $row );
+	}
+	fclose( $out );
+	exit;
+}
+
+/* ==========================================================================
+   6b. BULK DELETE HANDLER
    ========================================================================== */
 
 function llm_bot_monitor_handle_bulk_action(): void {
 	if ( ! isset( $_POST['llm_bulk_action'] ) || $_POST['llm_bulk_action'] !== 'delete' ) {
 		return;
 	}
+	check_admin_referer( 'llm_bot_monitor_bulk', '_llm_nonce' );
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'Unauthorized' );
 	}
-	check_admin_referer( 'llm_bot_monitor_bulk', '_llm_nonce' );
 
 	$ids = array_map( 'absint', (array) ( $_POST['log_ids'] ?? array() ) );
 	$ids = array_filter( $ids );
@@ -505,7 +580,8 @@ function llm_bot_monitor_render_page(): void {
 		wp_die( 'Unauthorized' );
 	}
 
-	// Handle bulk delete action before any output (needs headers).
+	// Handle actions before any output (needs headers).
+	llm_bot_monitor_handle_csv_export();
 	llm_bot_monitor_handle_bulk_action();
 
 	$tab  = sanitize_key( $_GET['tab'] ?? 'logs' );
@@ -680,6 +756,7 @@ function llm_bot_monitor_render_tab_logs(): void {
 			</label>
 			<button type="submit" class="button button-primary">Filter</button>
 			<a href="<?php echo esc_url( admin_url( 'tools.php?page=llm-bot-monitor' ) ); ?>" class="button">Reset</a>
+			<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array_merge( array( 'page' => 'llm-bot-monitor', 'action' => 'export_csv' ), array_filter( $filters, fn( $v ) => $v !== '' ) ), admin_url( 'tools.php' ) ), 'llm_csv_export' ) ); ?>" class="button">Export CSV</a>
 		</form>
 
 		<!-- Log Table -->
@@ -699,7 +776,7 @@ function llm_bot_monitor_render_tab_logs(): void {
 							<span class="displaying-num"><?php echo esc_html( number_format_i18n( $log_data['total'] ) ); ?> items</span>
 							<?php
 							$base_url = admin_url( 'tools.php' );
-							$args     = array_merge( array( 'page' => 'llm-bot-monitor' ), array_filter( $filters ), array( 'per_page' => $per_page ) );
+							$args     = array_merge( array( 'page' => 'llm-bot-monitor' ), array_filter( $filters, fn( $v ) => $v !== '' ), array( 'per_page' => $per_page ) );
 							?>
 							<?php if ( $current_page > 1 ) : ?>
 								<a class="prev-page button" aria-label="Previous page" href="<?php echo esc_url( add_query_arg( array_merge( $args, array( 'paged' => $current_page - 1 ) ), $base_url ) ); ?>">&lsaquo;</a>
@@ -728,7 +805,7 @@ function llm_bot_monitor_render_tab_logs(): void {
 						<?php endif; ?>
 						<th class="manage-column">When</th>
 						<th class="manage-column">Bot</th>
-						<th class="manage-column">Page</th>
+						<th class="manage-column column-page">Page</th>
 						<th class="manage-column">IP</th>
 						<th class="manage-column">Status</th>
 					</tr>
@@ -746,12 +823,7 @@ function llm_bot_monitor_render_tab_logs(): void {
 								</th>
 								<td><?php echo esc_html( wp_date( 'Y-m-d H:i:s', strtotime( $row->hit_at . ' UTC' ) ) ); ?></td>
 								<td><?php echo esc_html( $row->bot_name ); ?></td>
-								<td title="<?php echo esc_attr( $row->request_url ); ?>">
-									<?php
-									$path = wp_parse_url( $row->request_url, PHP_URL_PATH ) ?: '/';
-									echo esc_html( $path );
-									?>
-								</td>
+								<td class="column-page"><a href="<?php echo esc_url( $row->request_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $row->request_url ); ?></a></td>
 								<td><?php echo esc_html( $row->ip_address ); ?></td>
 								<td><?php echo absint( $row->status_code ); ?></td>
 							</tr>

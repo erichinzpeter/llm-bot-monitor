@@ -70,3 +70,7 @@ GPL-2.0-or-later — see [LICENSE](LICENSE) for details.
 ## Author
 
 [Eric Hinzpeter](https://eric-hinzpeter.de)
+
+## Credits
+
+Inspired by [LLM Bot Tracker by Hueston](https://github.com/HuestonCo/wordpress-llm-crawler-log)

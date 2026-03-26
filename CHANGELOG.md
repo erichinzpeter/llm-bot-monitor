@@ -3,6 +3,18 @@
 Development changelog tracking code review findings and fixes.
 Serves as a learning reference for future iterations.
 
+## v2.4.0 — 2026-03-26
+
+GDPR hardening: IP address anonymization.
+
+### Changes
+
+- **IP anonymization** — All bot IP addresses are now anonymized before storage. IPv4: last 2 octets zeroed (e.g. `40.88.21.7` → `40.88.0.0`). IPv6: last 80 bits zeroed. Provider/netblock identification remains possible, individual server identification does not.
+- **Migration** — Existing IP addresses in the database are automatically anonymized on plugin update.
+- **README** — Updated Privacy & GDPR section with IP anonymization details.
+
+---
+
 ## v2.3.0 — 2026-03-26
 
 Crawler Logs UX: full URL display, CSV export, README credit.

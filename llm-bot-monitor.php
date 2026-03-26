@@ -3,7 +3,7 @@
  * Plugin Name: LLM Bot Monitor
  * Plugin URI:  https://github.com/erichinzpeter/llm-bot-monitor
  * Description: Tracks AI/LLM bot crawlers visiting your site. GDPR-compliant — only bot traffic is logged, never human visitors.
- * Version:     2.3.0
+ * Version:     2.4.0
  * Author:      Eric Hinzpeter
  * Author URI:  https://eric-hinzpeter.de
  * License:     GPL-2.0-or-later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LLM_BOT_MONITOR_VERSION', '2.3.0' );
+define( 'LLM_BOT_MONITOR_VERSION', '2.4.0' );
 define( 'LLM_BOT_MONITOR_TABLE', 'llm_bot_log' );
 
 /* ==========================================================================
@@ -51,7 +51,7 @@ function llm_bot_monitor_activate(): void {
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE bot_name NOT IN ({$placeholders})", $known_names ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 	// Anonymize existing IP addresses (zero last 2 octets for IPv4).
-	$wpdb->query( "UPDATE {$table} SET ip_address = CONCAT(SUBSTRING_INDEX(ip_address, '.', 2), '.0.0') WHERE ip_address LIKE '%.%.%.%' AND ip_address NOT LIKE '%.0.0'" );
+	$wpdb->query( "UPDATE {$table} SET ip_address = CONCAT(SUBSTRING_INDEX(ip_address, '.', 2), '.0.0') WHERE ip_address LIKE '%.%.%.%' AND ip_address NOT LIKE '%.0.0'" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 	// Anonymize IPv6 addresses via PHP (low volume expected).
 	$ipv6_rows = $wpdb->get_results( "SELECT id, ip_address FROM {$table} WHERE ip_address LIKE '%:%' AND ip_address != '0.0.0.0'" );

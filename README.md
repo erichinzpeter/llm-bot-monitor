@@ -59,6 +59,7 @@ This plugin is **GDPR-compliant by design**:
 - **No cookies** set or read
 - **No external API calls** — all data stays in your WordPress database
 - **No fingerprinting** of any kind
+- **IP anonymization** — bot IPs are truncated before storage (last 2 octets zeroed for IPv4, last 80 bits for IPv6), making individual server identification impossible
 - **IP addresses stored are bot IPs only** — datacenter IPs belonging to AI companies, not personal data
 - **Automatic data minimization** — logs older than 90 days are automatically deleted
 - **No consent mechanism needed** — no personal data of human users is collected

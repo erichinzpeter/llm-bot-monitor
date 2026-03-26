@@ -50,6 +50,18 @@ function llm_bot_monitor_activate(): void {
 	$placeholders   = implode( ', ', array_fill( 0, count( $known_names ), '%s' ) );
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE bot_name NOT IN ({$placeholders})", $known_names ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
+	// Anonymize existing IP addresses (zero last 2 octets for IPv4).
+	$wpdb->query( "UPDATE {$table} SET ip_address = CONCAT(SUBSTRING_INDEX(ip_address, '.', 2), '.0.0') WHERE ip_address LIKE '%.%.%.%' AND ip_address NOT LIKE '%.0.0'" );
+
+	// Anonymize IPv6 addresses via PHP (low volume expected).
+	$ipv6_rows = $wpdb->get_results( "SELECT id, ip_address FROM {$table} WHERE ip_address LIKE '%:%' AND ip_address != '0.0.0.0'" );
+	foreach ( $ipv6_rows as $row ) {
+		$anon = llm_bot_monitor_anonymize_ip( $row->ip_address );
+		if ( $anon !== $row->ip_address ) {
+			$wpdb->update( $table, array( 'ip_address' => $anon ), array( 'id' => $row->id ), array( '%s' ), array( '%d' ) );
+		}
+	}
+
 	update_option( 'llm_bot_monitor_db_version', LLM_BOT_MONITOR_VERSION );
 
 	if ( ! wp_next_scheduled( 'llm_bot_monitor_daily_cleanup' ) ) {

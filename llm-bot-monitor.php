@@ -141,9 +141,35 @@ function llm_bot_monitor_match_bot( string $ua ): string|false {
 	return false;
 }
 
+function llm_bot_monitor_anonymize_ip( string $ip ): string {
+	if ( str_contains( $ip, '.' ) && filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+		// IPv4: zero last 2 octets → 1.2.3.4 becomes 1.2.0.0
+		$parts = explode( '.', $ip );
+		$parts[2] = '0';
+		$parts[3] = '0';
+		return implode( '.', $parts );
+	}
+
+	if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+		// IPv6: zero last 80 bits → keep first 48 bits (3 groups)
+		$expanded = inet_ntop( inet_pton( $ip ) );
+		$groups   = explode( ':', $expanded );
+		for ( $i = 3; $i < 8; $i++ ) {
+			$groups[ $i ] = '0000';
+		}
+		return inet_ntop( inet_pton( implode( ':', $groups ) ) );
+	}
+
+	// Fallback: invalid IP or 0.0.0.0 — return as-is.
+	return $ip;
+}
+
 function llm_bot_monitor_get_ip(): string {
 	$ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-	return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '0.0.0.0';
+	if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+		return '0.0.0.0';
+	}
+	return llm_bot_monitor_anonymize_ip( $ip );
 }
 
 function llm_bot_monitor_track_request(): void {

@@ -450,14 +450,17 @@ function llm_bot_monitor_get_visibility_data( int $days = 30 ): array {
 	$since = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
 
 	// 1. Get all published pages and posts
-	$posts = get_posts( [
-		'post_type'      => [ 'post', 'page' ],
-		'post_status'    => 'publish',
-		'posts_per_page' => -1,
-		'no_found_rows'  => true,
-		'orderby'        => 'date',
-		'order'          => 'DESC',
-	] );
+	$posts = $wpdb->get_results(
+		"SELECT ID, post_title, post_type, post_date
+		 FROM {$wpdb->posts}
+		 WHERE post_status = 'publish'
+		   AND post_type IN ('post', 'page')
+		 ORDER BY post_date DESC"
+	);
+
+	// Prime the WP object cache so get_permalink() doesn't trigger N+1 queries.
+	$post_ids = wp_list_pluck( $posts, 'ID' );
+	_prime_post_caches( $post_ids, false, false );
 
 	// 2. Get bot visits aggregated by URL path
 	$bot_visits = $wpdb->get_results( $wpdb->prepare(

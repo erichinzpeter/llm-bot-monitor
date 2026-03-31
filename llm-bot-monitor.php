@@ -235,11 +235,17 @@ add_action( 'template_redirect', 'llm_bot_monitor_track_request' );
 
 function llm_bot_monitor_run_cleanup(): void {
 	global $wpdb;
-	$table = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
-	$wpdb->query( $wpdb->prepare(
-		"DELETE FROM {$table} WHERE hit_at < %s LIMIT 10000",
-		gmdate( 'Y-m-d H:i:s', strtotime( '-90 days' ) )
-	) );
+	$table  = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
+	$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( '-90 days' ) );
+
+	$batch = 0;
+	do {
+		$wpdb->query( $wpdb->prepare(
+			"DELETE FROM {$table} WHERE hit_at < %s LIMIT 5000",
+			$cutoff
+		) );
+		$batch++;
+	} while ( $wpdb->rows_affected === 5000 && $batch < 100 );
 }
 add_action( 'llm_bot_monitor_daily_cleanup', 'llm_bot_monitor_run_cleanup' );
 

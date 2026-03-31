@@ -320,22 +320,20 @@ function llm_bot_monitor_get_chart_data(): array {
 	$table = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
 
 	$rows = $wpdb->get_results( $wpdb->prepare(
-		"SELECT DATE(CONVERT_TZ(hit_at, '+00:00', @@session.time_zone)) AS day, COUNT(*) AS hits
-		 FROM {$table}
-		 WHERE hit_at >= %s
-		 GROUP BY DATE(CONVERT_TZ(hit_at, '+00:00', @@session.time_zone))
-		 ORDER BY day ASC",
+		"SELECT hit_at FROM {$table} WHERE hit_at >= %s ORDER BY hit_at ASC",
 		gmdate( 'Y-m-d', strtotime( '-30 days' ) )
 	) );
 
 	$map = array();
 	foreach ( $rows as $row ) {
-		$map[ $row->day ] = (int) $row->hits;
+		$day          = wp_date( 'Y-m-d', strtotime( $row->hit_at . ' UTC' ) );
+		$map[ $day ]  = ( $map[ $day ] ?? 0 ) + 1;
 	}
 
 	$data = array();
-	$date = new DateTime( '-30 days', new DateTimeZone( 'UTC' ) );
-	$end  = new DateTime( 'now', new DateTimeZone( 'UTC' ) );
+	$tz   = wp_timezone();
+	$date = new DateTime( '-30 days', $tz );
+	$end  = new DateTime( 'now', $tz );
 	while ( $date <= $end ) {
 		$key    = $date->format( 'Y-m-d' );
 		$data[] = array( 'day' => $key, 'hits' => $map[ $key ] ?? 0 );

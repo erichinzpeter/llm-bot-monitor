@@ -3,7 +3,7 @@
  * Plugin Name: LLM Bot Monitor
  * Plugin URI:  https://github.com/erichinzpeter/llm-bot-monitor
  * Description: Tracks AI/LLM bot crawlers visiting your site. GDPR-compliant — only bot traffic is logged, never human visitors.
- * Version:     2.4.0
+ * Version:     2.5.0
  * Author:      Eric Hinzpeter
  * Author URI:  https://eric-hinzpeter.de
  * License:     GPL-2.0-or-later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LLM_BOT_MONITOR_VERSION', '2.4.0' );
+define( 'LLM_BOT_MONITOR_VERSION', '2.5.0' );
 define( 'LLM_BOT_MONITOR_TABLE', 'llm_bot_log' );
 
 /* ==========================================================================
@@ -200,13 +200,27 @@ function llm_bot_monitor_track_request(): void {
 	}
 
 	global $wpdb;
+
+	$ip = llm_bot_monitor_get_ip();
+
+	$recent = (int) $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM " . $wpdb->prefix . LLM_BOT_MONITOR_TABLE . " WHERE ip_address = %s AND bot_name = %s AND hit_at > %s",
+		$ip,
+		$bot_name,
+		gmdate( 'Y-m-d H:i:s', time() - 3600 )
+	) );
+
+	if ( $recent >= 20 ) {
+		return;
+	}
+
 	$wpdb->insert(
 		$wpdb->prefix . LLM_BOT_MONITOR_TABLE,
 		array(
 			'hit_at'      => current_time( 'mysql', true ),
 			'bot_name'    => $bot_name,
 			'request_url' => mb_substr( esc_url_raw( home_url( $_SERVER['REQUEST_URI'] ?? '/' ) ), 0, 2048 ),
-			'ip_address'  => llm_bot_monitor_get_ip(),
+			'ip_address'  => $ip,
 			'user_agent'  => mb_substr( $ua, 0, 512 ),
 			'status_code' => is_404() ? 404 : ( http_response_code() ?: 200 ),
 		),
@@ -221,11 +235,17 @@ add_action( 'template_redirect', 'llm_bot_monitor_track_request' );
 
 function llm_bot_monitor_run_cleanup(): void {
 	global $wpdb;
-	$table = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
-	$wpdb->query( $wpdb->prepare(
-		"DELETE FROM {$table} WHERE hit_at < %s LIMIT 10000",
-		gmdate( 'Y-m-d H:i:s', strtotime( '-90 days' ) )
-	) );
+	$table  = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
+	$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( '-90 days' ) );
+
+	$batch = 0;
+	do {
+		$wpdb->query( $wpdb->prepare(
+			"DELETE FROM {$table} WHERE hit_at < %s LIMIT 5000",
+			$cutoff
+		) );
+		$batch++;
+	} while ( $wpdb->rows_affected === 5000 && $batch < 100 );
 }
 add_action( 'llm_bot_monitor_daily_cleanup', 'llm_bot_monitor_run_cleanup' );
 
@@ -300,22 +320,20 @@ function llm_bot_monitor_get_chart_data(): array {
 	$table = $wpdb->prefix . LLM_BOT_MONITOR_TABLE;
 
 	$rows = $wpdb->get_results( $wpdb->prepare(
-		"SELECT DATE(CONVERT_TZ(hit_at, '+00:00', @@session.time_zone)) AS day, COUNT(*) AS hits
-		 FROM {$table}
-		 WHERE hit_at >= %s
-		 GROUP BY DATE(CONVERT_TZ(hit_at, '+00:00', @@session.time_zone))
-		 ORDER BY day ASC",
+		"SELECT hit_at FROM {$table} WHERE hit_at >= %s ORDER BY hit_at ASC",
 		gmdate( 'Y-m-d', strtotime( '-30 days' ) )
 	) );
 
 	$map = array();
 	foreach ( $rows as $row ) {
-		$map[ $row->day ] = (int) $row->hits;
+		$day          = wp_date( 'Y-m-d', strtotime( $row->hit_at . ' UTC' ) );
+		$map[ $day ]  = ( $map[ $day ] ?? 0 ) + 1;
 	}
 
 	$data = array();
-	$date = new DateTime( '-30 days', new DateTimeZone( 'UTC' ) );
-	$end  = new DateTime( 'now', new DateTimeZone( 'UTC' ) );
+	$tz   = wp_timezone();
+	$date = new DateTime( '-30 days', $tz );
+	$end  = new DateTime( 'now', $tz );
 	while ( $date <= $end ) {
 		$key    = $date->format( 'Y-m-d' );
 		$data[] = array( 'day' => $key, 'hits' => $map[ $key ] ?? 0 );
@@ -430,14 +448,17 @@ function llm_bot_monitor_get_visibility_data( int $days = 30 ): array {
 	$since = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
 
 	// 1. Get all published pages and posts
-	$posts = get_posts( [
-		'post_type'      => [ 'post', 'page' ],
-		'post_status'    => 'publish',
-		'posts_per_page' => -1,
-		'no_found_rows'  => true,
-		'orderby'        => 'date',
-		'order'          => 'DESC',
-	] );
+	$posts = $wpdb->get_results(
+		"SELECT ID, post_title, post_type, post_date
+		 FROM {$wpdb->posts}
+		 WHERE post_status = 'publish'
+		   AND post_type IN ('post', 'page')
+		 ORDER BY post_date DESC"
+	);
+
+	// Prime the WP object cache so get_permalink() doesn't trigger N+1 queries.
+	$post_ids = wp_list_pluck( $posts, 'ID' );
+	_prime_post_caches( $post_ids, false, false );
 
 	// 2. Get bot visits aggregated by URL path
 	$bot_visits = $wpdb->get_results( $wpdb->prepare(
@@ -569,6 +590,9 @@ function llm_bot_monitor_handle_csv_export(): void {
 	$out = fopen( 'php://output', 'w' );
 	fputcsv( $out, array( 'id', 'hit_at', 'bot_name', 'request_url', 'ip_address', 'user_agent', 'status_code' ) );
 	foreach ( $rows as $row ) {
+		$row = array_map( static function ( $v ) {
+			return preg_match( '/^[=+\-@]/', (string) $v ) ? "'" . $v : $v;
+		}, $row );
 		fputcsv( $out, $row );
 	}
 	fclose( $out );

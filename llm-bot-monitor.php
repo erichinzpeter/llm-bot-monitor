@@ -200,13 +200,27 @@ function llm_bot_monitor_track_request(): void {
 	}
 
 	global $wpdb;
+
+	$ip = llm_bot_monitor_get_ip();
+
+	$recent = (int) $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM " . $wpdb->prefix . LLM_BOT_MONITOR_TABLE . " WHERE ip_address = %s AND bot_name = %s AND hit_at > %s",
+		$ip,
+		$bot_name,
+		gmdate( 'Y-m-d H:i:s', time() - 3600 )
+	) );
+
+	if ( $recent >= 20 ) {
+		return;
+	}
+
 	$wpdb->insert(
 		$wpdb->prefix . LLM_BOT_MONITOR_TABLE,
 		array(
 			'hit_at'      => current_time( 'mysql', true ),
 			'bot_name'    => $bot_name,
 			'request_url' => mb_substr( esc_url_raw( home_url( $_SERVER['REQUEST_URI'] ?? '/' ) ), 0, 2048 ),
-			'ip_address'  => llm_bot_monitor_get_ip(),
+			'ip_address'  => $ip,
 			'user_agent'  => mb_substr( $ua, 0, 512 ),
 			'status_code' => is_404() ? 404 : ( http_response_code() ?: 200 ),
 		),

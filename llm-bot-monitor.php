@@ -569,6 +569,9 @@ function llm_bot_monitor_handle_csv_export(): void {
 	$out = fopen( 'php://output', 'w' );
 	fputcsv( $out, array( 'id', 'hit_at', 'bot_name', 'request_url', 'ip_address', 'user_agent', 'status_code' ) );
 	foreach ( $rows as $row ) {
+		$row = array_map( static function ( $v ) {
+			return preg_match( '/^[=+\-@]/', (string) $v ) ? "'" . $v : $v;
+		}, $row );
 		fputcsv( $out, $row );
 	}
 	fclose( $out );

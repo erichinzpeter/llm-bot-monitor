@@ -3,7 +3,7 @@
  * Plugin Name: LLM Bot Monitor
  * Plugin URI:  https://github.com/erichinzpeter/llm-bot-monitor
  * Description: Tracks AI/LLM bot crawlers visiting your site. GDPR-compliant — only bot traffic is logged, never human visitors.
- * Version:     2.4.0
+ * Version:     2.5.0
  * Author:      Eric Hinzpeter
  * Author URI:  https://eric-hinzpeter.de
  * License:     GPL-2.0-or-later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LLM_BOT_MONITOR_VERSION', '2.4.0' );
+define( 'LLM_BOT_MONITOR_VERSION', '2.5.0' );
 define( 'LLM_BOT_MONITOR_TABLE', 'llm_bot_log' );
 
 /* ==========================================================================

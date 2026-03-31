@@ -3,6 +3,19 @@
 Development changelog tracking code review findings and fixes.
 Serves as a learning reference for future iterations.
 
+## [2.5.0] — 2026-03-31
+
+### Security
+- CSV export now neutralises formula injection (CWE-1236): cells starting with `=`, `+`, `-`, `@` are prefixed with `'`
+
+### Fixed
+- Rate-limit bot log writes to 20 entries per IP+bot per hour to prevent log flooding
+- Cron cleanup now loops until all rows older than 90 days are deleted (previously capped at 10,000 per run)
+- Visibility tab: replaced `get_posts(-1)` with a direct SQL query to prevent memory exhaustion on large sites
+- Chart: replaced `CONVERT_TZ` / `@@session.time_zone` with PHP-side aggregation via `wp_date()` — fixes empty chart on hosts with unpopulated MySQL timezone tables
+
+---
+
 ## v2.4.0 — 2026-03-26
 
 GDPR hardening: IP address anonymization.

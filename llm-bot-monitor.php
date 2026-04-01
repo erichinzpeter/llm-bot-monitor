@@ -98,13 +98,18 @@ function llm_bot_monitor_bot_list(): array {
 
 		// Anthropic
 		'ClaudeBot'            => array( 'name' => 'ClaudeBot',            'provider' => 'Anthropic',    'category' => 'training' ),
+		'Anthropic'            => array( 'name' => 'Anthropic',            'provider' => 'Anthropic',    'category' => 'training' ),
 		'Claude-User'          => array( 'name' => 'Claude-User',          'provider' => 'Anthropic',    'category' => 'grounding' ),
+		'Claude-Web'           => array( 'name' => 'Claude-Web',           'provider' => 'Anthropic',    'category' => 'grounding' ),
 		'Claude-SearchBot'     => array( 'name' => 'Claude-SearchBot',     'provider' => 'Anthropic',    'category' => 'grounding' ),
 
 		// Google
-		'Google-Extended'      => array( 'name' => 'Google-Extended',      'provider' => 'Google',       'category' => 'training' ),
-		'Gemini-Deep-Research' => array( 'name' => 'Gemini-Deep-Research', 'provider' => 'Google',       'category' => 'grounding' ),
-		'Google-Agent'         => array( 'name' => 'Google-Agent',         'provider' => 'Google',       'category' => 'grounding' ),
+		'Google-Extended'       => array( 'name' => 'Google-Extended',       'provider' => 'Google',       'category' => 'training' ),
+		'Google-CloudVertexBot' => array( 'name' => 'Google-CloudVertexBot', 'provider' => 'Google',       'category' => 'grounding' ),
+		'Google-NotebookLM'     => array( 'name' => 'Google-NotebookLM',     'provider' => 'Google',       'category' => 'grounding' ),
+		'Google-Pinpoint'       => array( 'name' => 'Google-Pinpoint',       'provider' => 'Google',       'category' => 'grounding' ),
+		'Gemini-Deep-Research'  => array( 'name' => 'Gemini-Deep-Research',  'provider' => 'Google',       'category' => 'grounding' ),
+		'Google-Agent'          => array( 'name' => 'Google-Agent',          'provider' => 'Google',       'category' => 'grounding' ),
 
 		// Perplexity
 		'PerplexityBot'        => array( 'name' => 'PerplexityBot',        'provider' => 'Perplexity',   'category' => 'grounding' ),
@@ -129,6 +134,16 @@ function llm_bot_monitor_bot_list(): array {
 
 		// Mistral
 		'MistralBot'           => array( 'name' => 'MistralBot',           'provider' => 'Mistral',      'category' => 'training' ),
+		'MistralAI-User'       => array( 'name' => 'MistralAI-User',      'provider' => 'Mistral',      'category' => 'grounding' ),
+
+		// Cohere
+		'Cohere-AI'            => array( 'name' => 'Cohere-AI',           'provider' => 'Cohere',       'category' => 'training' ),
+
+		// Diffbot
+		'Diffbot'              => array( 'name' => 'Diffbot',             'provider' => 'Diffbot',      'category' => 'training' ),
+
+		// You.com
+		'YouBot'               => array( 'name' => 'YouBot',              'provider' => 'You.com',      'category' => 'grounding' ),
 	);
 }
 
